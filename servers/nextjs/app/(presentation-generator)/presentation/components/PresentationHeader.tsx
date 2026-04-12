@@ -252,11 +252,11 @@ const PresentationHeader = ({
           </div>}
           <ThemeSelector presentation_id={presentation_id} current_theme={presentationData?.theme || {}} themes={themes} />
 
-          <div className="flex items-center gap-2 bg-[#F6F6F9] px-3.5 h-[38px] border border-[#EDECEC] rounded-[80px]">
+          <div className="flex items-center gap-2 bg-[#f0f7f3] px-3.5 h-[38px] border border-[#c8dfd1] rounded-[80px]">
 
             <ToolTip content="Regenerate Presentation">
               <button onClick={handleReGenerate} className="group">
-                <RotateCcw className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#5141e5] duration-300" />
+                <RotateCcw className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2d7a4f] duration-300" />
               </button>
             </ToolTip>
             <Separator orientation="vertical" className="h-4" />
@@ -265,7 +265,7 @@ const PresentationHeader = ({
                 onUndo();
               }}>
 
-                <Undo2 className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#5141e5] duration-300" />
+                <Undo2 className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2d7a4f] duration-300" />
 
               </button>
             </ToolTip>
@@ -276,7 +276,7 @@ const PresentationHeader = ({
 
                 onRedo();
               }}>
-                <Redo2 className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#5141e5] duration-300" />
+                <Redo2 className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2d7a4f] duration-300" />
 
               </button>
             </ToolTip>
@@ -289,7 +289,7 @@ const PresentationHeader = ({
                   router.push(to);
                 }}
                 disabled={!presentationData?.slides || presentationData?.slides.length === 0} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group">
-                <Play className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#5141e5] duration-300" />
+                <Play className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2d7a4f] duration-300" />
               </button>
             </ToolTip>
           </div>
@@ -298,7 +298,8 @@ const PresentationHeader = ({
             <PopoverTrigger asChild>
               <button className="flex  items-center gap-[7px] px-[18px] py-[11px] rounded-[53px] text-sm font-semibold text-[#101323]"
                 style={{
-                  background: "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)",
+                  background: "#1a5c3a",
+                  color: "#ffffff",
                 }}
                 disabled={isExporting}
               >
