@@ -82,7 +82,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${unbounded.variable} ${syne.variable} antialiased`}
+        className={`${inter.variable} ${unbounded.variable} ${syne.variable} font-sans antialiased`}
       >
         <Providers>
           <MixpanelInitializer>
