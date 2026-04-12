@@ -123,11 +123,13 @@ const SidePanel = ({
   }
 
   return (
-    <div className="bg-[#F6F6F9] pt-8 px-4 w-[200px]">
+    <div className="bg-white pt-8 px-4 w-[200px] border-r border-gray-100">
 
-      <img onClick={() => {
-        router.push("/dashboard");
-      }} src="/logo-with-bg.png" alt="" className="w-10 h-10 cursor-pointer object-contain" />
+      <div className="flex items-center gap-2 px-1">
+        <span className="text-lg font-semibold tracking-tight" style={{ color: '#1a5c3a', fontFamily: 'inherit' }}>
+          3Labs
+        </span>
+      </div>
 
       <Separator orientation="horizontal" className="my-6 " />
       <div
@@ -155,7 +157,7 @@ const SidePanel = ({
                   <div
                     key={`${slide.id}-${index}`}
                     onClick={() => onSlideClick(index)}
-                    className={` cursor-pointer ring-2   rounded-[12px] transition-all duration-200 ${selectedSlide === index ? ' ring-[#5141e5]' : 'ring-gray-200'
+                    className={` cursor-pointer ring-2   rounded-[12px] transition-all duration-200 ${selectedSlide === index ? ' ring-[#2d7a4f]' : 'ring-gray-200'
                       }`}
                   >
                     <div className=" bg-white pointer-events-none  relative overflow-hidden aspect-video">
