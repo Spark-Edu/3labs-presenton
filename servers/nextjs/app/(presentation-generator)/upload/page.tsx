@@ -46,10 +46,10 @@ const page = () => {
     <div className="relative">
       <Header />
       <div className="flex flex-col items-center justify-center  mb-8">
-        <h1 className="text-[64px] font-normal font-unbounded text-[#101323] ">
+        <h1 className="text-[64px] font-normal font-sans text-[#101323] ">
           AI Presentation
         </h1>
-        <p className="text-xl font-syne text-[#101323CC]">Choose a design, set preferences, and generate polished slides.</p>
+        <p className="text-xl font-sans text-[#101323CC]">Choose a design, set preferences, and generate polished slides.</p>
       </div>
 
       <UploadPage />

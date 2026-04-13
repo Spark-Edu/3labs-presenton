@@ -19,7 +19,7 @@ const BuiltInLayoutPreview = memo(({ layout, templateId, index }: {
   const LayoutComponent = layout.component;
   return (
     <div
-      className="relative bg-gray-100 font-syne border border-gray-200 overflow-hidden aspect-video rounded"
+      className="relative bg-gray-100 font-sans border border-gray-200 overflow-hidden aspect-video rounded"
       style={{ contain: 'layout style paint' }}
     >
       <div className="absolute inset-0 bg-transparent z-10" />
@@ -48,7 +48,7 @@ const BuiltInTemplateCard = memo(({ template, isSelected, onSelect }: {
       className={`${isSelected ? 'border-2 border-blue-500' : ''} cursor-pointer relative hover:shadow-lg transition-all duration-200 group overflow-hidden`}
       onClick={handleClick}
     >
-      <span className="text-xs font-syne absolute top-2 flex gap-1 capitalize items-center left-2 rounded-[100px] px-2.5 py-1 bg-[#3A3A3AF5] text-white font-semibold z-40">
+      <span className="text-xs font-sans absolute top-2 flex gap-1 capitalize items-center left-2 rounded-[100px] px-2.5 py-1 bg-[#3A3A3AF5] text-white font-semibold z-40">
         Layouts- {template.layouts.length}
       </span>
       <img src="/card_bg.svg" alt="" className="absolute top-0 left-0 w-full h-full object-cover" />
@@ -66,10 +66,10 @@ const BuiltInTemplateCard = memo(({ template, isSelected, onSelect }: {
       </div>
       <div className="flex items-center justify-between p-5 bg-white border-t border-[#EDEEEF] relative z-40">
         <div>
-          <h3 className="text-sm font-bold text-gray-900 capitalize font-syne">
+          <h3 className="text-sm font-bold text-gray-900 capitalize font-sans">
             {template.name}
           </h3>
-          <p className="text-xs text-gray-600  line-clamp-2 font-syne">
+          <p className="text-xs text-gray-600  line-clamp-2 font-sans">
             {template.description}
           </p>
         </div>
@@ -130,8 +130,8 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = memo(({
   const customTemplateCards = useMemo(() => {
     if (customLoading) {
       return (
-        <div className="flex items-center justify-center py-12 font-syne">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 font-syne" />
+        <div className="flex items-center justify-center py-12 font-sans">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 font-sans" />
           <span className="ml-3 text-gray-600">Loading custom templates...</span>
         </div>
       );
@@ -177,13 +177,13 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = memo(({
       {/* Custom AI Templates */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-gray-900 font-syne">Custom</h3>
+          <h3 className="text-base font-semibold text-gray-900 font-sans">Custom</h3>
         </div>
         {customTemplateCards}
       </div>
       {/* In Built Templates */}
       <div>
-        <h3 className="text-base font-semibold text-gray-900 mb-3 font-syne">In Built</h3>
+        <h3 className="text-base font-semibold text-gray-900 mb-3 font-sans">In Built</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {builtInTemplateCards}
         </div>

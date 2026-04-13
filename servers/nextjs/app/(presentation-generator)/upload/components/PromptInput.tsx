@@ -15,7 +15,7 @@ export function PromptInput({ value, onChange }: PromptInputProps) {
   };
 
   return (
-    <div className="space-y-2 font-syne">
+    <div className="space-y-2 font-sans">
       <div className="relative">
         <Textarea
           value={value}

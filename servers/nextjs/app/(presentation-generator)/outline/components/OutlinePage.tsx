@@ -40,7 +40,7 @@ const OutlinePage: React.FC = () => {
 
 
   return (
-    <div className=" font-syne  pb-9">
+    <div className=" font-sans  pb-9">
 
       <OverlayLoader
         show={loadingState.isLoading}

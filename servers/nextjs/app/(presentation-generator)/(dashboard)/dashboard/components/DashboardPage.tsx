@@ -49,7 +49,7 @@ const DashboardPage: React.FC = () => {
     <div className="min-h-screen  w-full px-6 pb-10 relative">
       <div className="sticky top-0 right-0 z-50 py-[28px]   backdrop-blur mb-4 ">
         <div className="flex xl:flex-row flex-col gap-6 xl:gap-0 items-center justify-between">
-          <h3 className=" text-[28px] tracking-[-0.84px] font-unbounded font-normal text-[#101828] flex items-center gap-2">
+          <h3 className=" text-[28px] tracking-[-0.84px] font-sans font-normal text-[#101828] flex items-center gap-2">
 
             Slide Presentations
           </h3>
@@ -59,7 +59,7 @@ const DashboardPage: React.FC = () => {
 
             <Link
               href="/generate"
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-black text-sm font-semibold font-syne shadow-sm hover:shadow-md"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-black text-sm font-semibold font-sans shadow-sm hover:shadow-md"
               aria-label="Create new presentation"
               style={{
                 borderRadius: "48px",

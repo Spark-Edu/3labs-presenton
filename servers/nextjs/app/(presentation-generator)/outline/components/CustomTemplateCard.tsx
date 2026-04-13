@@ -34,12 +34,12 @@ export const CustomTemplateCard = memo(({ template, onSelectTemplate, selectedTe
     return (
 
         <Card
-            className={`${isSelected ? 'border-2 border-blue-500' : ''} font-syne cursor-pointer flex flex-col justify-between relative hover:shadow-lg transition-all duration-200 group overflow-hidden`}
+            className={`${isSelected ? 'border-2 border-blue-500' : ''} font-sans cursor-pointer flex flex-col justify-between relative hover:shadow-lg transition-all duration-200 group overflow-hidden`}
             onClick={() => onSelectTemplate(template.id)}
         >
 
             <img src="/card_bg.svg" alt="" className="absolute top-0 left-0 w-full h-full object-cover" />
-            <span className="text-xs font-syne absolute top-2 flex gap-1 capitalize  items-center left-2 rounded-[100px]  px-2.5 py-1 bg-[#3A3A3AF5] text-white font-semibold  z-40">
+            <span className="text-xs font-sans absolute top-2 flex gap-1 capitalize  items-center left-2 rounded-[100px]  px-2.5 py-1 bg-[#3A3A3AF5] text-white font-semibold  z-40">
                 Layouts- {totalLayouts}
             </span>
             <div className="p-5">

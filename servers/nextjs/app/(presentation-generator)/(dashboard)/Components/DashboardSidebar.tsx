@@ -42,7 +42,7 @@ const DashboardSidebar = () => {
                         <img src="/logo-with-bg.png" alt="Presenton logo" className="h-[40px] object-contain w-full" />
                     </div>
                 </div>
-                <nav className="pt-6 font-syne" aria-label="Dashboard sections">
+                <nav className="pt-6 font-sans" aria-label="Dashboard sections">
                     <div className="  space-y-6">
 
                         {/* Dashboard */}
@@ -93,7 +93,7 @@ const DashboardSidebar = () => {
                 </nav>
             </div>
 
-            <div className=" pt-5 border-t border-slate-200/60  font-syne "
+            <div className=" pt-5 border-t border-slate-200/60  font-sans "
             >
                 {BelongingNavItems.map(({ key, label: itemLabel, icon: Icon }) => {
                     const isActive = activeTab === key;
