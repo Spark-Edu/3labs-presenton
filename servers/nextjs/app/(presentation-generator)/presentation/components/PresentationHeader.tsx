@@ -64,17 +64,13 @@ const PresentationHeader = ({
   useEffect(() => {
     const load = async () => {
       try {
-        const [customThemes] = await Promise.all([
-          ThemeApi.getThemes(),
-        ]);
+        const customThemes = await ThemeApi.getThemes();
         setThemes([...customThemes, ...DEFAULT_THEMES]);
       } catch (e: any) {
         toast.error(e?.message || "Failed to load themes");
       }
     };
-    if (themes.length === 0) {
-      load();
-    }
+    load();
   }, []);
 
   const { onUndo, onRedo, canUndo, canRedo } = usePresentationUndoRedo();
