@@ -58,9 +58,42 @@ export const usePresentationData = (
         dispatch(clearHistory());
         setLoading(false);
       }
-      if (data?.theme) {
-        applyTheme(data.theme);
-      }
+      const DEFAULT_THEME: Theme = {
+        id: "professional-blue",
+        name: "Professional Blue",
+        description: "Clean and professional blue theme",
+        user: "",
+        logo: "",
+        logo_url: undefined,
+        company_name: undefined,
+        data: {
+          colors: {
+            primary: "#161616",
+            background: "#ffffff",
+            card: "#dae6ff",
+            stroke: "#d1d1d1",
+            primary_text: "#eeeaea",
+            background_text: "#000000",
+            graph_0: "#2e2e2e",
+            graph_1: "#424242",
+            graph_2: "#585858",
+            graph_3: "#6f6f6f",
+            graph_4: "#868686",
+            graph_5: "#9e9e9e",
+            graph_6: "#b7b7b7",
+            graph_7: "#d1d1d1",
+            graph_8: "#e8e8e8",
+            graph_9: "#f5f5f5"
+          },
+          fonts: {
+            textFont: {
+              name: "Inter",
+              url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+            }
+          }
+        }
+      };
+      applyTheme(data?.theme?.data?.fonts ? data.theme : DEFAULT_THEME);
     } catch (error) {
       setError(true);
       toast.error("Failed to load presentation");
