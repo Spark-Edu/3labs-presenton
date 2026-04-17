@@ -1,5 +1,7 @@
 FROM python:3.11-slim-bookworm
 
+ARG CACHE_BUST=2
+
 # Install Node.js and npm
 RUN apt-get update && apt-get install -y \
     nginx \
