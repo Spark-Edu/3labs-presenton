@@ -34,7 +34,6 @@ interface ButtonState {
 const SettingsPage = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const [mode, setMode] = useState<'nanobanana' | 'presenton'>('presenton')
   const [selectedProvider, setSelectedProvider] = useState<'text-provider' | 'image-provider'>('text-provider')
   const userConfigState = useSelector((state: RootState) => state.userConfig);
   const [llmConfig, setLlmConfig] = useState<LLMConfig>(
@@ -249,7 +248,7 @@ const SettingsPage = () => {
       />
 
       <main className="w-full mx-auto gap-6   overflow-hidden flex ">
-        <SettingSideBar mode={mode} setMode={setMode} selectedProvider={selectedProvider} setSelectedProvider={setSelectedProvider} />
+        <SettingSideBar selectedProvider={selectedProvider} setSelectedProvider={setSelectedProvider} />
         <div className="w-full">
           <div className="sticky top-0 right-0 z-50 py-[28px]   backdrop-blur mb-4 ">
             <div className="flex  gap-3 items-center ">
@@ -263,10 +262,7 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          {mode === 'nanobanana' && <div className=" w-full bg-[#F9F8F8] p-7 rounded-[20px]">
-            <h4>Nano Banana</h4>
-          </div>}
-          {mode === 'presenton' && selectedProvider === 'text-provider' && <TextProvider
+          {selectedProvider === 'text-provider' && <TextProvider
 
 
             onInputChange={(value, field) => {
@@ -277,7 +273,7 @@ const SettingsPage = () => {
             }}
             llmConfig={llmConfig}
           />}
-          {mode === 'presenton' && selectedProvider === 'image-provider' && <ImageProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
+          {selectedProvider === 'image-provider' && <ImageProvider llmConfig={llmConfig} setLlmConfig={setLlmConfig} />}
 
         </div>
       </main>
