@@ -7,7 +7,7 @@ import random
 import traceback
 from typing import Annotated, List, Literal, Optional, Tuple
 import dirtyjson
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Header, HTTPException, Path, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -81,6 +81,7 @@ async def get_all_presentations(sql_session: AsyncSession = Depends(get_async_se
             SlideModel,
             (SlideModel.presentation == PresentationModel.id) & (SlideModel.index == 0),
         )
+        .where(PresentationModel.user_id == x_user_id)
         .order_by(PresentationModel.created_at.desc())
     )
 
@@ -499,6 +500,7 @@ async def generate_presentation_handler(
     request: GeneratePresentationRequest,
     presentation_id: uuid.UUID,
     async_status: Optional[AsyncPresentationGenerationTaskModel],
+    user_id: str = "local",
     sql_session: AsyncSession = Depends(get_async_session),
 ):
     try:
@@ -669,6 +671,7 @@ async def generate_presentation_handler(
             tone=request.tone.value,
             verbosity=request.verbosity.value,
             instructions=request.instructions,
+            user_id=user_id,
         )
 
         # Updating async status
@@ -831,6 +834,7 @@ async def generate_presentation_async(
     request: GeneratePresentationRequest,
     background_tasks: BackgroundTasks,
     sql_session: AsyncSession = Depends(get_async_session),
+    x_user_id: str = Header(default="local"),
 ):
     try:
         (presentation_id,) = await check_if_api_request_is_valid(request, sql_session)
@@ -849,6 +853,7 @@ async def generate_presentation_async(
             presentation_id,
             async_status=async_status,
             sql_session=sql_session,
+            user_id=x_user_id,
         )
         return async_status
 

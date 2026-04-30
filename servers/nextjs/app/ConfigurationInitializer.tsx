@@ -12,6 +12,15 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
   const dispatch = useDispatch();
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // Capture userId from URL param and persist for API calls
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    if (userId) {
+      localStorage.setItem('presenton_user_id', userId);
+    }
+  }, []);
   const router = useRouter();
   const route = usePathname();
 

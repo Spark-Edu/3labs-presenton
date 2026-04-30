@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -11,7 +11,10 @@ from models.sql.key_value import KeyValueSqlModel
 from services.database import get_async_session
 
 THEMES_ROUTER = APIRouter(prefix="/themes", tags=["Themes"])
-THEMES_STORAGE_KEY = "presentation_custom_themes"
+
+
+def _themes_key(user_id: str) -> str:
+    return f"themes:{user_id}"
 
 
 class ThemeRequest(BaseModel):
@@ -56,9 +59,10 @@ def _normalize_theme(theme: dict[str, Any]) -> ThemeResponse:
     )
 
 
-async def _get_themes_row(sql_session: AsyncSession) -> Optional[KeyValueSqlModel]:
+async def _get_themes_row(sql_session: AsyncSession, user_id: str) -> Optional[KeyValueSqlModel]:
+    key = _themes_key(user_id)
     return await sql_session.scalar(
-        select(KeyValueSqlModel).where(KeyValueSqlModel.key == THEMES_STORAGE_KEY)
+        select(KeyValueSqlModel).where(KeyValueSqlModel.key == key)
     )
 
 
@@ -88,22 +92,26 @@ async def _resolve_logo_url(
 
 @THEMES_ROUTER.get("/default", response_model=List[dict[str, Any]])
 async def get_default_themes():
-    # Built-in themes are provided by Next.js constants in this project.
     return []
 
 
 @THEMES_ROUTER.get("/all", response_model=List[ThemeResponse])
-async def get_themes(sql_session: AsyncSession = Depends(get_async_session)):
-    row = await _get_themes_row(sql_session)
+async def get_themes(
+    sql_session: AsyncSession = Depends(get_async_session),
+    x_user_id: str = Header(default="local"),
+):
+    row = await _get_themes_row(sql_session, x_user_id)
     themes = _read_themes_from_row(row)
     return [_normalize_theme(theme) for theme in themes]
 
 
 @THEMES_ROUTER.post("/create", response_model=ThemeResponse)
 async def create_theme(
-    payload: ThemeRequest, sql_session: AsyncSession = Depends(get_async_session)
+    payload: ThemeRequest,
+    sql_session: AsyncSession = Depends(get_async_session),
+    x_user_id: str = Header(default="local"),
 ):
-    row = await _get_themes_row(sql_session)
+    row = await _get_themes_row(sql_session, x_user_id)
     themes = _read_themes_from_row(row)
     logo_url = payload.logo_url or await _resolve_logo_url(sql_session, payload.logo)
 
@@ -111,7 +119,7 @@ async def create_theme(
         "id": str(uuid.uuid4()),
         "name": payload.name,
         "description": payload.description,
-        "user": "local",
+        "user": x_user_id,
         "logo": payload.logo,
         "logo_url": logo_url,
         "company_name": payload.company_name,
@@ -119,11 +127,12 @@ async def create_theme(
     }
     themes.append(theme)
 
+    key = _themes_key(x_user_id)
     if row:
         row.value = {"themes": themes}
         sql_session.add(row)
     else:
-        sql_session.add(KeyValueSqlModel(key=THEMES_STORAGE_KEY, value={"themes": themes}))
+        sql_session.add(KeyValueSqlModel(key=key, value={"themes": themes}))
 
     await sql_session.commit()
     return _normalize_theme(theme)
@@ -134,8 +143,9 @@ async def update_theme(
     theme_id: str,
     payload: ThemeUpdateRequest,
     sql_session: AsyncSession = Depends(get_async_session),
+    x_user_id: str = Header(default="local"),
 ):
-    row = await _get_themes_row(sql_session)
+    row = await _get_themes_row(sql_session, x_user_id)
     if not row:
         raise HTTPException(status_code=404, detail="Theme not found")
 
@@ -166,9 +176,11 @@ async def update_theme(
 
 @THEMES_ROUTER.delete("/delete/{theme_id}", status_code=204)
 async def delete_theme(
-    theme_id: str, sql_session: AsyncSession = Depends(get_async_session)
+    theme_id: str,
+    sql_session: AsyncSession = Depends(get_async_session),
+    x_user_id: str = Header(default="local"),
 ):
-    row = await _get_themes_row(sql_session)
+    row = await _get_themes_row(sql_session, x_user_id)
     if not row:
         return
 
