@@ -114,6 +114,23 @@ const setupUserConfigFromEnv = () => {
 };
 
 const startServers = async () => {
+  // Run Alembic migrations before starting FastAPI
+  await new Promise((resolve) => {
+    const migrate = spawn("python", ["-m", "alembic", "upgrade", "head"], {
+      cwd: fastapiDir,
+      stdio: "inherit",
+      env: process.env,
+    });
+    migrate.on("exit", (code) => {
+      if (code !== 0) console.error("Alembic migration failed with code:", code);
+      resolve();
+    });
+    migrate.on("error", (err) => {
+      console.error("Alembic migration error:", err);
+      resolve();
+    });
+  });
+
   const fastApiProcess = spawn(
     "python",
     [
