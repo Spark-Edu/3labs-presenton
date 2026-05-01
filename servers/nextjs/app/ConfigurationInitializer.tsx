@@ -119,26 +119,22 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#E9E8F8] via-[#F5F4FF] to-[#E0DFF7] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 text-center">
+          <div className="bg-white rounded-2xl p-8 text-center">
             {/* Logo/Branding */}
             <div className="mb-6">
-              <img
-                src="/Logo.png"
-                alt="PresentOn"
-                className="h-12 mx-auto mb-4 opacity-90"
-              />
-              <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto rounded-full"></div>
+              <span className="text-2xl font-bold text-[#1a5c3a] font-inter">3Labs</span>
+              <div className="w-16 h-1 bg-[#1a5c3a] mx-auto rounded-full mt-2"></div>
             </div>
 
             {/* Loading Text */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-800 font-inter">
-                Initializing Application
+                Đang tải trình soạn thảo...
               </h3>
-              <p className="text-sm text-gray-600 font-inter">
-                Loading configuration and checking model availability...
+              <p className="text-sm text-gray-500 font-inter">
+                Vui lòng chờ trong giây lát.
               </p>
             </div>
 
