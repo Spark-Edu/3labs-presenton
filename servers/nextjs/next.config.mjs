@@ -4,6 +4,24 @@ const nextConfig = {
   distDir: ".next-build",
   
 
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' https://app.3labs.ca https://learn.3labs.ca http://localhost:5173 http://localhost:3000",
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+        ],
+      },
+    ];
+  },
+
   // Rewrites for development - proxy font requests to FastAPI backend
   async rewrites() {
     return [
