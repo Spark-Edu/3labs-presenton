@@ -40,6 +40,7 @@ export const usePresentationData = (
     }
     Object.entries(cssVariables).forEach(([key, value]) => {
       element.style.setProperty(key, value)
+      document.documentElement.style.setProperty(key, value)
     })
     useFontLoader({ [theme.data.fonts.textFont.name]: theme.data.fonts.textFont.url })
 
@@ -47,6 +48,9 @@ export const usePresentationData = (
     element.style.setProperty('font-family', `"${theme.data.fonts.textFont.name}"`)
     element.style.setProperty('--heading-font-family', `"${theme.data.fonts.textFont.name}"`)
     element.style.setProperty('--body-font-family', `"${theme.data.fonts.textFont.name}"`)
+    document.documentElement.style.setProperty('font-family', `"${theme.data.fonts.textFont.name}"`)
+    document.documentElement.style.setProperty('--heading-font-family', `"${theme.data.fonts.textFont.name}"`)
+    document.documentElement.style.setProperty('--body-font-family', `"${theme.data.fonts.textFont.name}"`)
     // Update the Presentation content with theme
   }
 
