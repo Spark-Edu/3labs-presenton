@@ -72,7 +72,10 @@ PRESENTATION_ROUTER = APIRouter(prefix="/presentation", tags=["Presentation"])
 
 
 @PRESENTATION_ROUTER.get("/all", response_model=List[PresentationWithSlides])
-async def get_all_presentations(sql_session: AsyncSession = Depends(get_async_session)):
+async def get_all_presentations(
+    x_user_id: str = Header(default="local"),
+    sql_session: AsyncSession = Depends(get_async_session)
+):
     presentations_with_slides = []
 
     query = (
@@ -140,6 +143,7 @@ async def create_presentation(
     include_title_slide: Annotated[bool, Body()] = True,
     web_search: Annotated[bool, Body()] = False,
     theme: Annotated[Optional[dict], Body()] = None,
+    x_user_id: str = Header(default="local"),
     sql_session: AsyncSession = Depends(get_async_session),
 ):
 
@@ -164,6 +168,7 @@ async def create_presentation(
         include_title_slide=include_title_slide,
         web_search=web_search,
         theme=theme,
+        user_id=x_user_id,
     )
 
     sql_session.add(presentation)
