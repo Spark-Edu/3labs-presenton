@@ -10,7 +10,8 @@
  */
 
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { clearOutlines, setPresentationId } from "@/store/slices/presentationGeneration";
@@ -55,6 +56,7 @@ const UploadPage = () => {
     webSearch: false,
   });
 
+  const searchParams = useSearchParams();
   const [loadingState, setLoadingState] = useState<LoadingState>({
     isLoading: false,
     message: "",
@@ -62,6 +64,21 @@ const UploadPage = () => {
     showProgress: false,
     extra_info: "",
   });
+
+  // Pre-fill config from URL params when launched from 3Labs lesson builder
+  useEffect(() => {
+    const prompt = searchParams.get('prompt');
+    const language = searchParams.get('language');
+    const nSlides = searchParams.get('n_slides');
+    if (prompt || language || nSlides) {
+      setConfig((prev) => ({
+        ...prev,
+        ...(prompt ? { prompt } : {}),
+        ...(language ? { language } : {}),
+        ...(nSlides ? { slides: nSlides } : {}),
+      }));
+    }
+  }, []);
 
   /**
    * Updates the presentation configuration
