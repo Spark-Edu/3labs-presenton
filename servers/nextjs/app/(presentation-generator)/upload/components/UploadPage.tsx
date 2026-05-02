@@ -74,7 +74,7 @@ const UploadPage = () => {
       setConfig((prev) => ({
         ...prev,
         ...(prompt ? { prompt } : {}),
-        ...(language ? { language } : {}),
+        ...(language ? { language: language as typeof prev.language } : {}),
         ...(nSlides ? { slides: nSlides } : {}),
       }));
     }
