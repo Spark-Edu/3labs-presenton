@@ -149,6 +149,7 @@ export const usePresentationGeneration = (
       if (response) {
         dispatch(clearPresentationData());
         clearTheme();
+        window.parent.postMessage({ type: '3labs_presentation_ready', presentationId }, '*');
         router.replace(`/presentation?id=${presentationId}&stream=true&type=standard`);
       }
     } catch (error: any) {
