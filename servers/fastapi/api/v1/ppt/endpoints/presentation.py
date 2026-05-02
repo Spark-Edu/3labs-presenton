@@ -80,7 +80,7 @@ async def get_all_presentations(
 
     query = (
         select(PresentationModel, SlideModel)
-        .join(
+        .outerjoin(
             SlideModel,
             (SlideModel.presentation == PresentationModel.id) & (SlideModel.index == 0),
         )
@@ -93,7 +93,7 @@ async def get_all_presentations(
     presentations_with_slides = [
         PresentationWithSlides(
             **presentation.model_dump(),
-            slides=[first_slide],
+            slides=[first_slide] if first_slide else [],
         )
         for presentation, first_slide in rows
     ]
