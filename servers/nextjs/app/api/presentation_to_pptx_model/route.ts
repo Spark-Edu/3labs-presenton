@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
 
     await closeBrowserAndPage(browser, page);
 
+    console.log('[pptx-payload]', JSON.stringify(presentation_pptx_model.slides?.[0]?.shapes));
     return NextResponse.json(presentation_pptx_model);
   } catch (error: any) {
     console.error(error);
