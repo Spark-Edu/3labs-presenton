@@ -53,10 +53,6 @@ export async function GET(request: NextRequest) {
 
     await closeBrowserAndPage(browser, page);
 
-    console.log('[pptx-debug] slide count:', slides_pptx_models.length);
-    if (slides_pptx_models[0]) {
-      console.log('[pptx-debug] first slide shapes:', JSON.stringify(slides_pptx_models[0].shapes?.slice(0,2)));
-    }
     return NextResponse.json(presentation_pptx_model);
   } catch (error: any) {
     console.error(error);
