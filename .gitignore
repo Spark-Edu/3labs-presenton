@@ -22,3 +22,4 @@ container.db
 .agents
 skills-lock.json
 .codex/
+.DS_Store
