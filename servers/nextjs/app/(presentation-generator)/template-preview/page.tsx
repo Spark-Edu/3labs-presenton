@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { ExternalLink, Loader2, Plus } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 
 import { templates } from "@/app/presentation-templates";
 import type { TemplateLayoutsWithSettings } from "@/app/presentation-templates/utils";
@@ -189,9 +189,6 @@ const LayoutPreview = () => {
             <h2 className="text-xl font-semibold text-gray-800 ">
               My Custom Templates
             </h2>
-            <a href="/custom-template" className="text-sm flex font-bold font-inter items-center justify-center gap-2  bg-[#5146E5] text-white px-4 py-2 rounded-md">
-              <Plus className="w-4 h-4" /> Create new template
-            </a>
           </div>
 
           {customLoading ? (
@@ -203,7 +200,7 @@ const LayoutPreview = () => {
             <Card className="p-8 text-center">
               <p className="text-gray-500">No custom templates yet.</p>
               <p className="text-sm text-gray-400 mt-2">
-                Custom templates you create will appear here.
+                Custom template creation is disabled. Use one of the built-in template families above.
               </p>
             </Card>
           ) : (

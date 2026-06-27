@@ -5,10 +5,6 @@ import { TemplateLayoutsWithSettings } from "@/app/presentation-templates/utils"
 import { templates } from "@/app/presentation-templates";
 import { Card } from "@/components/ui/card";
 import { TemplateWithData } from "@/app/presentation-templates/utils";
-import { CustomTemplates, useCustomTemplateSummaries } from "@/app/hooks/useCustomTemplates";
-import { Loader2 } from "lucide-react";
-import { CustomTemplateCard } from "./CustomTemplateCard";
-import CreateCustomTemplate from "../../(dashboard)/templates/components/CreateCustomTemplate";
 
 // Memoized layout preview for built-in templates
 const BuiltInLayoutPreview = memo(({ layout, templateId, index }: {
@@ -80,8 +76,8 @@ const BuiltInTemplateCard = memo(({ template, isSelected, onSelect }: {
 BuiltInTemplateCard.displayName = 'BuiltInTemplateCard';
 
 interface TemplateSelectionProps {
-  selectedTemplate: (TemplateLayoutsWithSettings | string) | null;
-  onSelectTemplate: (template: TemplateLayoutsWithSettings | string) => void;
+  selectedTemplate: TemplateLayoutsWithSettings | null;
+  onSelectTemplate: (template: TemplateLayoutsWithSettings) => void;
 }
 
 const TemplateSelection: React.FC<TemplateSelectionProps> = memo(({
@@ -100,63 +96,17 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = memo(({
     }
   }, []);
 
-  const { templates: customTemplates, loading: customLoading } = useCustomTemplateSummaries();
-
-  // Stable callback for custom template selection
-  const handleCustomSelect = useCallback(
-    (template: TemplateLayoutsWithSettings | string) => onSelectTemplate(template),
-    [onSelectTemplate]
-  );
-
   // Stable callback for built-in template selection
   const handleBuiltInSelect = useCallback(
     (template: TemplateLayoutsWithSettings) => onSelectTemplate(template),
     [onSelectTemplate]
   );
 
-  // Derive the selected custom template id only when selectedTemplate changes
-  const selectedCustomId = useMemo(
-    () => (typeof selectedTemplate === 'string' ? selectedTemplate : null),
-    [selectedTemplate]
-  );
-
   // Derive the selected built-in template id only when selectedTemplate changes
   const selectedBuiltInId = useMemo(
-    () => (typeof selectedTemplate !== 'string' ? selectedTemplate?.id ?? null : null),
+    () => selectedTemplate?.id ?? null,
     [selectedTemplate]
   );
-
-  // Memoize the custom templates section
-  const customTemplateCards = useMemo(() => {
-    if (customLoading) {
-      return (
-        <div className="flex items-center justify-center py-12 font-sans">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 font-sans" />
-          <span className="ml-3 text-gray-600">Loading custom templates...</span>
-        </div>
-      );
-    }
-    if (customTemplates.length === 0) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-          <CreateCustomTemplate />
-        </div>
-      );
-    }
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {customTemplates.map((template: CustomTemplates) => (
-          <CustomTemplateCard
-            key={template.id}
-            template={template}
-            onSelectTemplate={handleCustomSelect}
-            selectedTemplate={selectedCustomId}
-          />
-        ))}
-      </div>
-    );
-  }, [customLoading, customTemplates, handleCustomSelect, selectedCustomId]);
 
   // Memoize the built-in templates list
   const builtInTemplateCards = useMemo(
@@ -174,16 +124,8 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = memo(({
 
   return (
     <div className="space-y-[30px] mb-4">
-      {/* Custom AI Templates */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-gray-900 font-sans">Custom</h3>
-        </div>
-        {customTemplateCards}
-      </div>
-      {/* In Built Templates */}
-      <div>
-        <h3 className="text-base font-semibold text-gray-900 mb-3 font-sans">In Built</h3>
+        <h3 className="text-base font-semibold text-gray-900 mb-3 font-sans">Templates</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {builtInTemplateCards}
         </div>

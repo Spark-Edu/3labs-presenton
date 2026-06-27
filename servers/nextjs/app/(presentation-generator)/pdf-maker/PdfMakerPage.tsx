@@ -92,12 +92,18 @@ const PresentationPage = ({ presentation_id }: { presentation_id: string }) => {
     Object.entries(cssVariables).forEach(([key, value]) => {
       element.style.setProperty(key, value)
     })
-    useFontLoader({ [theme.data.fonts.textFont.name]: theme.data.fonts.textFont.url })
+    const textFont = theme.data.fonts.textFont
+    const headingFont = theme.data.fonts.headingFont ?? textFont
+    const bodyFont = theme.data.fonts.bodyFont ?? textFont
+    useFontLoader({
+      [headingFont.name]: headingFont.url,
+      [bodyFont.name]: bodyFont.url,
+    })
 
     // Apply fonts to preview container
-    element.style.setProperty('font-family', `"${theme.data.fonts.textFont.name}"`)
-    element.style.setProperty('--heading-font-family', `"${theme.data.fonts.textFont.name}"`)
-    element.style.setProperty('--body-font-family', `"${theme.data.fonts.textFont.name}"`)
+    element.style.setProperty('font-family', `"${bodyFont.name}"`)
+    element.style.setProperty('--heading-font-family', `"${headingFont.name}"`)
+    element.style.setProperty('--body-font-family', `"${bodyFont.name}"`)
     // Update the Presentation content with theme
   }
 

@@ -46,9 +46,12 @@ export interface Theme {
     name: string;
     description: string;
     user: string;
+    org_id?: string | null;
+    created_by?: string | null;
     logo: string; // image id
     logo_url?: string; // preview url
     company_name?: string;
+    company_website?: string | null;
     data: any;
 }
 export interface ThemeParams {
@@ -59,6 +62,7 @@ export interface ThemeParams {
     logo_url?: string | null; // preview url
     data: any;
     company_name?: string | null;
+    company_website?: string | null;
 }
 
 

@@ -20,6 +20,7 @@ class ThemeRequest(BaseModel):
     name: str
     description: str
     company_name: Optional[str] = None
+    company_website: Optional[str] = None
     logo: Optional[str] = None
     logo_url: Optional[str] = None
     data: dict[str, Any] = Field(default_factory=dict)
@@ -29,6 +30,7 @@ class ThemeUpdateRequest(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     company_name: Optional[str] = None
+    company_website: Optional[str] = None
     logo: Optional[str] = None
     logo_url: Optional[str] = None
     data: Optional[dict[str, Any]] = None
@@ -42,16 +44,23 @@ class ThemeResponse(BaseModel):
     logo: Optional[str] = None
     logo_url: Optional[str] = None
     company_name: Optional[str] = None
+    company_website: Optional[str] = None
+    org_id: Optional[str] = None
+    created_by: Optional[str] = None
     data: dict[str, Any]
 
 
-def _themes_storage_key(user_id: Optional[str]) -> str:
+def _themes_storage_key(user_id: Optional[str], org_id: Optional[str] = None) -> str:
+    if org_id:
+        return f"{THEMES_STORAGE_KEY}:org:{org_id}"
     if not user_id:
         return THEMES_STORAGE_KEY
     return f"{THEMES_STORAGE_KEY}:user:{user_id}"
 
 
-def _theme_owner(user_id: Optional[str]) -> str:
+def _theme_owner(user_id: Optional[str], org_id: Optional[str] = None) -> str:
+    if org_id:
+        return f"org:{org_id}"
     return user_id or "local"
 
 
@@ -64,6 +73,9 @@ def _normalize_theme(theme: dict[str, Any]) -> ThemeResponse:
         logo=theme.get("logo"),
         logo_url=theme.get("logo_url"),
         company_name=theme.get("company_name"),
+        company_website=theme.get("company_website"),
+        org_id=theme.get("org_id"),
+        created_by=theme.get("created_by"),
         data=theme.get("data", {}),
     )
 
@@ -126,8 +138,9 @@ async def get_default_themes():
 async def get_themes(
     sql_session: AsyncSession = Depends(get_async_session),
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+    x_org_id: Optional[str] = Header(default=None, alias="X-Org-Id"),
 ):
-    row = await _get_themes_row(sql_session, _themes_storage_key(x_user_id))
+    row = await _get_themes_row(sql_session, _themes_storage_key(x_user_id, x_org_id))
     themes = _read_themes_from_row(row)
     return [_normalize_theme(theme) for theme in themes]
 
@@ -137,8 +150,9 @@ async def create_theme(
     payload: ThemeRequest,
     sql_session: AsyncSession = Depends(get_async_session),
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+    x_org_id: Optional[str] = Header(default=None, alias="X-Org-Id"),
 ):
-    storage_key = _themes_storage_key(x_user_id)
+    storage_key = _themes_storage_key(x_user_id, x_org_id)
     row = await _get_themes_row(sql_session, storage_key)
     themes = _read_themes_from_row(row)
     logo_url = payload.logo_url or await _resolve_logo_url(sql_session, payload.logo)
@@ -147,10 +161,13 @@ async def create_theme(
         "id": str(uuid.uuid4()),
         "name": payload.name,
         "description": payload.description,
-        "user": _theme_owner(x_user_id),
+        "user": _theme_owner(x_user_id, x_org_id),
+        "org_id": x_org_id,
+        "created_by": x_user_id,
         "logo": payload.logo,
         "logo_url": logo_url,
         "company_name": payload.company_name,
+        "company_website": payload.company_website,
         "data": payload.data,
     }
     themes.append(theme)
@@ -171,9 +188,10 @@ async def update_theme(
     payload: ThemeUpdateRequest,
     sql_session: AsyncSession = Depends(get_async_session),
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+    x_org_id: Optional[str] = Header(default=None, alias="X-Org-Id"),
 ):
     row, themes, theme = await _find_theme(
-        sql_session, _themes_storage_key(x_user_id), theme_id
+        sql_session, _themes_storage_key(x_user_id, x_org_id), theme_id
     )
 
     if payload.name is not None:
@@ -182,6 +200,8 @@ async def update_theme(
         theme["description"] = payload.description
     if payload.company_name is not None:
         theme["company_name"] = payload.company_name
+    if payload.company_website is not None:
+        theme["company_website"] = payload.company_website
     if payload.data is not None:
         theme["data"] = payload.data
     if payload.logo is not None:
@@ -201,8 +221,9 @@ async def delete_theme(
     theme_id: str,
     sql_session: AsyncSession = Depends(get_async_session),
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+    x_org_id: Optional[str] = Header(default=None, alias="X-Org-Id"),
 ):
-    row = await _get_themes_row(sql_session, _themes_storage_key(x_user_id))
+    row = await _get_themes_row(sql_session, _themes_storage_key(x_user_id, x_org_id))
     if not row:
         return
 
@@ -221,9 +242,10 @@ async def apply_theme_to_presentation(
     presentation_id: uuid.UUID,
     sql_session: AsyncSession = Depends(get_async_session),
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+    x_org_id: Optional[str] = Header(default=None, alias="X-Org-Id"),
 ):
     _, _, theme = await _find_theme(
-        sql_session, _themes_storage_key(x_user_id), theme_id
+        sql_session, _themes_storage_key(x_user_id, x_org_id), theme_id
     )
     presentation = await sql_session.get(PresentationModel, presentation_id)
     if not presentation:

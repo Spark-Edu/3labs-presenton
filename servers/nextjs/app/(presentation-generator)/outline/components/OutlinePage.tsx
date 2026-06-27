@@ -10,7 +10,7 @@ import OutlineContent from "./OutlineContent";
 import EmptyStateView from "./EmptyStateView";
 import GenerateButton from "./GenerateButton";
 
-import { TABS, Template } from "../types/index";
+import { TABS } from "../types/index";
 import { useOutlineStreaming } from "../hooks/useOutlineStreaming";
 import { useOutlineManagement } from "../hooks/useOutlineManagement";
 import { usePresentationGeneration } from "../hooks/usePresentationGeneration";
@@ -24,7 +24,7 @@ const OutlinePage: React.FC = () => {
   );
 
   const [activeTab, setActiveTab] = useState<string>(TABS.OUTLINE);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateLayoutsWithSettings | string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateLayoutsWithSettings | null>(null);
   // Custom hooks
   const streamState = useOutlineStreaming(presentation_id);
   const { handleDragEnd, handleAddSlide } = useOutlineManagement(outlines);

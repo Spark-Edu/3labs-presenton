@@ -1,18 +1,15 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { ArrowUpRight, ChevronRight, ExternalLink, Loader2, Plus } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Loader2 } from "lucide-react";
 import { templates } from "@/app/presentation-templates";
 import { TemplateWithData, TemplateLayoutsWithSettings } from "@/app/presentation-templates/utils";
 import {
-    useCustomTemplateSummaries,
     useCustomTemplatePreview,
     CustomTemplates,
 } from "@/app/hooks/useCustomTemplates";
 import { CompiledLayout } from "@/app/hooks/compileLayout";
-import CreateCustomTemplate from "./CreateCustomTemplate";
-import Link from "next/link";
 
 // Component for rendering custom template card with lazy-loaded previews
 export const CustomTemplateCard = React.memo(function CustomTemplateCard({ template }: { template: CustomTemplates }) {
@@ -158,9 +155,7 @@ const InbuiltTemplateCard = React.memo(function InbuiltTemplateCard({
 });
 
 const LayoutPreview = () => {
-    const [tab, setTab] = useState<'custom' | 'default'>('default');
     const router = useRouter();
-    const { templates: customTemplates, loading: customLoading } = useCustomTemplateSummaries();
 
     useEffect(() => {
         const existingScript = document.querySelector('script[src*="tailwindcss.com"]');
@@ -185,11 +180,6 @@ const LayoutPreview = () => {
         [handleOpenPreview],
     );
 
-    const customTemplateCards = useMemo(
-        () => customTemplates.map((template: CustomTemplates) => <CustomTemplateCard key={template.id} template={template} />),
-        [customTemplates],
-    );
-
     return (
         <div className="min-h-screen  relative font-syne">
             <div
@@ -205,71 +195,15 @@ const LayoutPreview = () => {
                     <h3 className=" text-[28px] tracking-[-0.84px] font-unbounded font-normal text-[#101828] flex items-center gap-2">
                         Templates
                     </h3>
-                    <div className="flex  gap-2.5 max-sm:w-full max-md:justify-center max-sm:flex-wrap">
-
-
-
-
-                        <Link
-                            href="/custom-template"
-                            className="inline-flex items-center font-syne font-semibold gap-2 rounded-xl px-4 py-2.5 text-black text-sm  shadow-sm hover:shadow-md"
-                            aria-label="Create new template"
-                            style={{
-                                borderRadius: "48px",
-                                background: "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)",
-                            }}
-                        >
-                            <span className="hidden md:inline">New Template</span>
-                            <span className="md:hidden">New</span>
-                            <ChevronRight className="w-4 h-4" />
-                        </Link>
-
-                    </div>
                 </div>
             </div>
 
             <div className="l mx-auto px-6 py-8">
-                <div className='p-1 rounded-[40px] bg-[#ffffff] w-fit border border-[#EDEEEF] flex items-center justify-center '>
-                    <button className='px-5  py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]'
-                        onClick={() => setTab('custom')}
-                        style={{
-                            background: tab === 'custom' ? '#F4F3FF' : 'transparent',
-                            color: tab === 'custom' ? '#1e293b' : '#3A3A3A'
-                        }}
-                    >Custom</button>
-                    <svg xmlns="http://www.w3.org/2000/svg" className='mx-1' width="2" height="17" viewBox="0 0 2 17" fill="none">
-                        <path d="M1 0V16.5" stroke="#EDECEC" strokeWidth="2" />
-                    </svg>
-                    <button className='px-5  py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]'
-                        onClick={() => setTab('default')}
-                        style={{
-                            background: tab === 'default' ? '#F4F3FF' : 'transparent',
-                            color: tab === 'default' ? '#1e293b' : '#3A3A3A'
-                        }}
-                    >Built-in</button>
-                </div>
-
-                {/* Inbuilt Templates Section */}
-                {tab === 'default' && <section className="my-12">
+                <section className="my-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {inbuiltTemplateCards}
                     </div>
-                </section>}
-
-
-                {tab === 'custom' && <section className="my-12">
-                    {customLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                            <span className="ml-3 text-gray-600">Loading custom templates...</span>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <CreateCustomTemplate />
-                            {customTemplateCards}
-                        </div>
-                    )}
-                </section>}
+                </section>
             </div>
         </div>
     );

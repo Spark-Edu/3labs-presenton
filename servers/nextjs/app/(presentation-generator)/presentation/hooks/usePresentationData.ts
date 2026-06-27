@@ -15,6 +15,37 @@ export const usePresentationData = (
 ) => {
   const dispatch = useDispatch();
 
+  const themeVariables = [
+    '--primary-color',
+    '--background-color',
+    '--card-color',
+    '--stroke',
+    '--primary-text',
+    '--background-text',
+    '--graph-0',
+    '--graph-1',
+    '--graph-2',
+    '--graph-3',
+    '--graph-4',
+    '--graph-5',
+    '--graph-6',
+    '--graph-7',
+    '--graph-8',
+    '--graph-9',
+    '--heading-font-family',
+    '--body-font-family',
+  ];
+
+  const clearTheme = () => {
+    const element = document.getElementById('presentation-slides-wrapper')
+    themeVariables.forEach((key) => {
+      element?.style.removeProperty(key)
+      document.documentElement.style.removeProperty(key)
+    })
+    element?.style.removeProperty('font-family')
+    document.documentElement.style.removeProperty('font-family')
+  }
+
   const applyTheme = async (theme: Theme) => {
     const element = document.getElementById('presentation-slides-wrapper')
     if (!element) return;
@@ -42,15 +73,21 @@ export const usePresentationData = (
       element.style.setProperty(key, value)
       document.documentElement.style.setProperty(key, value)
     })
-    useFontLoader({ [theme.data.fonts.textFont.name]: theme.data.fonts.textFont.url })
+    const textFont = theme.data.fonts.textFont
+    const headingFont = theme.data.fonts.headingFont ?? textFont
+    const bodyFont = theme.data.fonts.bodyFont ?? textFont
+    useFontLoader({
+      [headingFont.name]: headingFont.url,
+      [bodyFont.name]: bodyFont.url,
+    })
 
     // Apply fonts to preview container
-    element.style.setProperty('font-family', `"${theme.data.fonts.textFont.name}"`)
-    element.style.setProperty('--heading-font-family', `"${theme.data.fonts.textFont.name}"`)
-    element.style.setProperty('--body-font-family', `"${theme.data.fonts.textFont.name}"`)
-    document.documentElement.style.setProperty('font-family', `"${theme.data.fonts.textFont.name}"`)
-    document.documentElement.style.setProperty('--heading-font-family', `"${theme.data.fonts.textFont.name}"`)
-    document.documentElement.style.setProperty('--body-font-family', `"${theme.data.fonts.textFont.name}"`)
+    element.style.setProperty('font-family', `"${bodyFont.name}"`)
+    element.style.setProperty('--heading-font-family', `"${headingFont.name}"`)
+    element.style.setProperty('--body-font-family', `"${bodyFont.name}"`)
+    document.documentElement.style.setProperty('font-family', `"${bodyFont.name}"`)
+    document.documentElement.style.setProperty('--heading-font-family', `"${headingFont.name}"`)
+    document.documentElement.style.setProperty('--body-font-family', `"${bodyFont.name}"`)
     // Update the Presentation content with theme
   }
 
@@ -62,42 +99,11 @@ export const usePresentationData = (
         dispatch(clearHistory());
         setLoading(false);
       }
-      const DEFAULT_THEME: Theme = {
-        id: "professional-blue",
-        name: "Professional Blue",
-        description: "Clean and professional blue theme",
-        user: "",
-        logo: "",
-        logo_url: undefined,
-        company_name: undefined,
-        data: {
-          colors: {
-            primary: "#161616",
-            background: "#ffffff",
-            card: "#dae6ff",
-            stroke: "#d1d1d1",
-            primary_text: "#eeeaea",
-            background_text: "#000000",
-            graph_0: "#2e2e2e",
-            graph_1: "#424242",
-            graph_2: "#585858",
-            graph_3: "#6f6f6f",
-            graph_4: "#868686",
-            graph_5: "#9e9e9e",
-            graph_6: "#b7b7b7",
-            graph_7: "#d1d1d1",
-            graph_8: "#e8e8e8",
-            graph_9: "#f5f5f5"
-          },
-          fonts: {
-            textFont: {
-              name: "Inter",
-              url: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-            }
-          }
-        }
-      };
-      applyTheme(data?.theme?.data?.fonts ? data.theme : DEFAULT_THEME);
+      if (data?.theme?.data?.fonts) {
+        applyTheme(data.theme);
+      } else {
+        clearTheme();
+      }
     } catch (error) {
       setError(true);
       toast.error("Failed to load presentation");
