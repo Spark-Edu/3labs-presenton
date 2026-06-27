@@ -8,14 +8,62 @@ import { validate as uuidValidate } from 'uuid';
 import { getLayoutByLayoutId } from "@/app/presentation-templates";
 import { useCustomTemplateDetails } from "@/app/hooks/useCustomTemplates";
 import { updateSlideContent } from "@/store/slices/presentationGeneration";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 import { Loader2 } from "lucide-react";
 
+function getThemeBrand(theme?: any) {
+    const brand = theme?.data?.brand ?? {};
+    return {
+        companyName: theme?.company_name || brand.companyName || null,
+        companyWebsite: theme?.company_website || brand.website || null,
+        logoUrl: theme?.logo_url || brand.logoUrl || null,
+    };
+}
+
+function ThemeBrandOverlay({ theme }: { theme?: any }) {
+    const { companyName, companyWebsite, logoUrl } = getThemeBrand(theme);
+    const hasBrand = Boolean(companyName || companyWebsite || logoUrl);
+
+    if (!hasBrand) return null;
+
+    return (
+        <div className="pointer-events-none absolute bottom-5 left-8 right-8 z-40 flex items-end justify-between gap-4 text-[13px] leading-none">
+            <div className="flex min-w-0 items-center gap-2">
+                {logoUrl && (
+                    <img
+                        src={logoUrl}
+                        alt=""
+                        className="h-6 max-w-[96px] object-contain"
+                    />
+                )}
+                {companyName && (
+                    <span
+                        className="max-w-[280px] truncate font-semibold opacity-80"
+                        style={{ color: "var(--background-text, #111827)" }}
+                    >
+                        {companyName}
+                    </span>
+                )}
+            </div>
+            {companyWebsite && (
+                <span
+                    className="max-w-[320px] truncate text-right font-medium opacity-70"
+                    style={{ color: "var(--background-text, #111827)" }}
+                >
+                    {companyWebsite}
+                </span>
+            )}
+        </div>
+    );
+}
 
 
 
 export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEditMode: boolean, theme?: any, enableEditMode?: boolean }) => {
     const dispatch = useDispatch();
+    const presentationTheme = useSelector((state: RootState) => state.presentationGeneration.presentationData?.theme);
+    const resolvedTheme = theme ?? presentationTheme;
     const containerRef = useRef<HTMLDivElement | null>(null);
 
 
@@ -82,11 +130,17 @@ export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEd
         );
     }
     const LayoutComp = Layout as React.ComponentType<{ data: any }>;
+    const layoutData = {
+        ...slide.content,
+        _logo_url__: null,
+        __companyName__: null,
+        __companyWebsite__: null,
+    };
 
     if (isEditMode) {
         return (
             <SlideErrorBoundary label={`Slide ${slide.index + 1}`}>
-                <div ref={containerRef} className={` `}>
+                <div ref={containerRef} className="relative">
 
                     <EditableLayoutWrapper
                         slideIndex={slide.index}
@@ -113,13 +167,10 @@ export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEd
                                 }
                             }}
                         >
-                            <LayoutComp data={{
-                                ...slide.content,
-                                _logo_url__: theme ? theme.logo_url : null,
-                                __companyName__: (theme && theme.company_name) ? theme.company_name : null,
-                            }} />
+                            <LayoutComp data={layoutData} />
                         </TiptapTextReplacer>
                     </EditableLayoutWrapper>
+                    <ThemeBrandOverlay theme={resolvedTheme} />
 
 
 
@@ -129,11 +180,9 @@ export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEd
         );
     }
     return (
-        <LayoutComp data={{
-            ...slide.content,
-            _logo_url__: theme ? theme.logo_url : null,
-            __companyName__: (theme && theme.company_name) ? theme.company_name : null,
-        }} />
+        <div className="relative h-full w-full">
+            <LayoutComp data={layoutData} />
+            <ThemeBrandOverlay theme={resolvedTheme} />
+        </div>
     )
 };
-
