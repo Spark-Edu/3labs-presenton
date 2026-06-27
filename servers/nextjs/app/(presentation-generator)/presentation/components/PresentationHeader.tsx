@@ -272,7 +272,7 @@ const PresentationHeader = ({
 
                 onRedo();
               }}>
-                <Redo2 className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2d7a4f] duration-300" />
+                <Redo2 className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2665F9] duration-300" />
 
               </button>
             </ToolTip>
@@ -285,16 +285,15 @@ const PresentationHeader = ({
                   router.push(to);
                 }}
                 disabled={!presentationData?.slides || presentationData?.slides.length === 0} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group">
-                <Play className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2d7a4f] duration-300" />
+                <Play className="w-3.5 h-3.5 text-[#101323] group-hover:text-[#2665F9] duration-300" />
               </button>
             </ToolTip>
           </div>
 
           <Popover open={open} onOpenChange={setOpen} >
             <PopoverTrigger asChild>
-              <button className="flex  items-center gap-[7px] px-[18px] py-[11px] rounded-[53px] text-sm font-semibold text-[#101323]"
+              <button className="flex items-center gap-[7px] px-[18px] py-[11px] rounded-[53px] text-sm font-semibold bg-[#2665F9] text-white transition-colors hover:bg-[#1f55d8] disabled:opacity-60"
                 style={{
-                  background: "#1a5c3a",
                   color: "#ffffff",
                 }}
                 disabled={isExporting}
