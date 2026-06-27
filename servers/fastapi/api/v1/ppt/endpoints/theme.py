@@ -188,20 +188,22 @@ async def update_theme(
     if not row or not theme:
         raise HTTPException(status_code=404, detail="Theme not found")
 
-    if payload.name is not None:
+    updated_fields = getattr(payload, "model_fields_set", getattr(payload, "__fields_set__", set()))
+
+    if "name" in updated_fields:
         theme["name"] = payload.name
-    if payload.description is not None:
+    if "description" in updated_fields:
         theme["description"] = payload.description
-    if payload.company_name is not None:
+    if "company_name" in updated_fields:
         theme["company_name"] = payload.company_name
-    if payload.company_website is not None:
+    if "company_website" in updated_fields:
         theme["company_website"] = payload.company_website
-    if payload.data is not None:
+    if "data" in updated_fields:
         theme["data"] = payload.data
-    if payload.logo is not None:
+    if "logo" in updated_fields:
         theme["logo"] = payload.logo
         theme["logo_url"] = await _resolve_logo_url(sql_session, payload.logo)
-    elif payload.logo_url is not None:
+    if "logo_url" in updated_fields:
         theme["logo_url"] = payload.logo_url
 
     row.value = {"themes": themes}
