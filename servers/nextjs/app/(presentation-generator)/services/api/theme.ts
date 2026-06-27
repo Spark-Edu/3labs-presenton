@@ -64,6 +64,20 @@ class ThemeApi {
       throw error
     }
   }
+  static async applyThemeToPresentation(presentationId: string, themeId: string) {
+    try {
+      const response = await fetch(`/api/v1/ppt/themes/apply/${themeId}/presentation/${presentationId}`, {
+        method: "POST",
+        headers: getHeader(),
+        cache: "no-store",
+      })
+      return await ApiResponseHandler.handleResponse(response, "Failed to apply theme")
+    }
+    catch (error) {
+      console.error("Error applying theme:", error)
+      throw error
+    }
+  }
   static async generateTheme({ primary, background }: { primary?: string, background?: string }) {
     try {
       let body = {}

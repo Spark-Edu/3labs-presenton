@@ -70,6 +70,8 @@ const UploadPage = () => {
     const prompt = searchParams.get('prompt');
     const language = searchParams.get('language');
     const nSlides = searchParams.get('n_slides');
+    const userId = searchParams.get('userId');
+    if (userId) localStorage.setItem('presenton_user_id', userId);
     if (prompt || language || nSlides) {
       setConfig((prev) => ({
         ...prev,

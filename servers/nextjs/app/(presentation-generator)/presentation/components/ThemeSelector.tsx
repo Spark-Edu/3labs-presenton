@@ -8,6 +8,8 @@ import { updateTheme } from '@/store/slices/presentationGeneration';
 import { useRouter } from 'next/navigation';
 import { useFontLoader } from '../../hooks/useFontLoad';
 import { RootState } from '@/store/store';
+import ThemeApi from '../../services/api/theme';
+
 const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { presentation_id: string, current_theme: any, themes: any[] }) => {
     const [currentTheme, setCurrentTheme] = useState<any>(current_theme)
     const dispatch = useDispatch()
@@ -17,6 +19,7 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
         const element = document.getElementById('presentation-slides-wrapper')
         if (!element) return;
         if (allThemes.length === 0) return;
+        await ThemeApi.applyThemeToPresentation(presentation_id, theme.id)
         setCurrentTheme(theme)
         clearTheme()
         if (!theme.data.colors['graph_0']) { return; }
@@ -98,7 +101,7 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
                             className={`text-left group relative`}
                         >
 
-                            <div className={`rounded-xl cursor-pointer p-1 border shadow-sm bg-white  transition-all group-hover:shadow-md ${currentTheme.id === t.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                            <div className={`rounded-xl cursor-pointer p-1 border shadow-sm bg-white  transition-all group-hover:shadow-md ${currentTheme?.id === t.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
                                 <div className="rounded-lg p-2" style={{ backgroundColor: t.data.colors['background'] }}>
                                     <div className="rounded-md shadow-sm p-3" style={{ backgroundColor: t.data.colors['card'] }}>
                                         <div className="w-16 h-2 rounded-full mb-2" style={{ backgroundColor: t.data.colors['background_text'] }} />
