@@ -15,6 +15,7 @@ import { DashboardApi } from "../services/api/dashboard";
 import { V1ContentRender } from "../components/V1ContentRender";
 import { useFontLoader } from "../hooks/useFontLoad";
 import { Theme } from "../services/api/types";
+import { applyThemeFontStyles, getThemeFontConfig } from "../utils/themeFonts";
 
 
 
@@ -92,18 +93,9 @@ const PresentationPage = ({ presentation_id }: { presentation_id: string }) => {
     Object.entries(cssVariables).forEach(([key, value]) => {
       element.style.setProperty(key, value)
     })
-    const textFont = theme.data.fonts.textFont
-    const headingFont = theme.data.fonts.headingFont ?? textFont
-    const bodyFont = theme.data.fonts.bodyFont ?? textFont
-    useFontLoader({
-      [headingFont.name]: headingFont.url,
-      [bodyFont.name]: bodyFont.url,
-    })
-
-    // Apply fonts to preview container
-    element.style.setProperty('font-family', `"${bodyFont.name}"`)
-    element.style.setProperty('--heading-font-family', `"${headingFont.name}"`)
-    element.style.setProperty('--body-font-family', `"${bodyFont.name}"`)
+    const { fontsToLoad } = getThemeFontConfig(theme)
+    useFontLoader(fontsToLoad)
+    applyThemeFontStyles(element, theme)
     // Update the Presentation content with theme
   }
 

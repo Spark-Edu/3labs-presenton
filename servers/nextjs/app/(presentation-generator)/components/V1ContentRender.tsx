@@ -11,6 +11,7 @@ import { updateSlideContent } from "@/store/slices/presentationGeneration";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { Loader2 } from "lucide-react";
+import { getThemeFontConfig } from "../utils/themeFonts";
 
 function getThemeBrand(theme?: any) {
     const brand = theme?.data?.brand ?? {};
@@ -58,12 +59,40 @@ function ThemeBrandOverlay({ theme }: { theme?: any }) {
     );
 }
 
+function ThemeFontScope() {
+    return (
+        <style>{`
+            .presenton-theme-font-scope,
+            .presenton-theme-font-scope .font-sans,
+            .presenton-theme-font-scope .font-inter,
+            .presenton-theme-font-scope .font-instrument_sans {
+                font-family: var(--body-font-family, var(--theme-font-family, Inter, Arial, sans-serif)) !important;
+            }
+
+            .presenton-theme-font-scope h1,
+            .presenton-theme-font-scope h2,
+            .presenton-theme-font-scope h3,
+            .presenton-theme-font-scope [data-theme-heading="true"] {
+                font-family: var(--heading-font-family, var(--body-font-family, Inter, Arial, sans-serif)) !important;
+            }
+        `}</style>
+    );
+}
+
 
 
 export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEditMode: boolean, theme?: any, enableEditMode?: boolean }) => {
     const dispatch = useDispatch();
     const presentationTheme = useSelector((state: RootState) => state.presentationGeneration.presentationData?.theme);
     const resolvedTheme = theme ?? presentationTheme;
+    const hasThemeFonts = Boolean(resolvedTheme?.data?.fonts);
+    const { headingStack, bodyStack } = getThemeFontConfig(resolvedTheme);
+    const themeFontStyle = hasThemeFonts ? {
+        fontFamily: bodyStack,
+        "--theme-font-family": bodyStack,
+        "--heading-font-family": headingStack,
+        "--body-font-family": bodyStack,
+    } as React.CSSProperties : undefined;
     const containerRef = useRef<HTMLDivElement | null>(null);
 
 
@@ -140,7 +169,8 @@ export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEd
     if (isEditMode) {
         return (
             <SlideErrorBoundary label={`Slide ${slide.index + 1}`}>
-                <div ref={containerRef} className="relative">
+                <div ref={containerRef} className={hasThemeFonts ? "presenton-theme-font-scope relative" : "relative"} style={themeFontStyle}>
+                    {hasThemeFonts && <ThemeFontScope />}
 
                     <EditableLayoutWrapper
                         slideIndex={slide.index}
@@ -180,7 +210,8 @@ export const V1ContentRender = ({ slide, isEditMode, theme }: { slide: any, isEd
         );
     }
     return (
-        <div className="relative h-full w-full">
+        <div className={hasThemeFonts ? "presenton-theme-font-scope relative h-full w-full" : "relative h-full w-full"} style={themeFontStyle}>
+            {hasThemeFonts && <ThemeFontScope />}
             <LayoutComp data={layoutData} />
             <ThemeBrandOverlay theme={resolvedTheme} />
         </div>

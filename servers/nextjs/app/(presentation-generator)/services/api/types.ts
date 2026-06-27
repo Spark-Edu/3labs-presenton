@@ -52,7 +52,24 @@ export interface Theme {
     logo_url?: string; // preview url
     company_name?: string;
     company_website?: string | null;
-    data: any;
+    data: {
+        colors: any;
+        fonts: {
+            fontFamily?: {
+                id: string;
+                name: string;
+                languageSupport: string[];
+                heading: string;
+                body: string;
+                stack: string;
+            };
+            headingFont?: { name: string; url: string };
+            bodyFont?: { name: string; url: string };
+            textFont: { name: string; url: string };
+        };
+        brand?: any;
+        [key: string]: any;
+    };
 }
 export interface ThemeParams {
     id?: string;

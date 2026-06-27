@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useFontLoader } from '../../hooks/useFontLoad';
 import { RootState } from '@/store/store';
 import ThemeApi from '../../services/api/theme';
+import { applyThemeFontStyles, getThemeFontConfig } from '../../utils/themeFonts';
 
 const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { presentation_id: string, current_theme: any, themes: any[] }) => {
     const [currentTheme, setCurrentTheme] = useState<any>(current_theme)
@@ -44,18 +45,9 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
         Object.entries(cssVariables).forEach(([key, value]) => {
             element.style.setProperty(key, value)
         })
-        const textFont = theme.data.fonts.textFont
-        const headingFont = theme.data.fonts.headingFont ?? textFont
-        const bodyFont = theme.data.fonts.bodyFont ?? textFont
-        useFontLoader({
-            [headingFont.name]: headingFont.url,
-            [bodyFont.name]: bodyFont.url,
-        })
-
-        // Apply fonts to preview container
-        element.style.setProperty('font-family', `"${bodyFont.name}"`)
-        element.style.setProperty('--heading-font-family', `"${headingFont.name}"`)
-        element.style.setProperty('--body-font-family', `"${bodyFont.name}"`)
+        const { fontsToLoad } = getThemeFontConfig(theme)
+        useFontLoader(fontsToLoad)
+        applyThemeFontStyles(element, theme)
 
         dispatch(updateTheme(theme))
     }
@@ -80,7 +72,12 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
         element.style.removeProperty('--graph-9');
         element.style.removeProperty('--heading-font-family');
         element.style.removeProperty('--body-font-family');
+        element.style.removeProperty('--theme-font-family');
         element.style.removeProperty('font-family');
+        document.documentElement.style.removeProperty('--heading-font-family');
+        document.documentElement.style.removeProperty('--body-font-family');
+        document.documentElement.style.removeProperty('--theme-font-family');
+        document.documentElement.style.removeProperty('font-family');
     }
     const resetTheme = async () => {
         clearTheme();
