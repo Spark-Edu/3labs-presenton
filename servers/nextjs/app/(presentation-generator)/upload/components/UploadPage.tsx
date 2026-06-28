@@ -193,7 +193,7 @@ const UploadPage = () => {
     dispatch(setPresentationId(createResponse.id));
     dispatch(clearOutlines())
     trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/outline" });
-    router.push("/outline");
+    router.push(`/outline?id=${encodeURIComponent(createResponse.id)}`);
   };
 
   /**

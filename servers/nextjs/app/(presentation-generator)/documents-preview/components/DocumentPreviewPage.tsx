@@ -164,7 +164,7 @@ const DocumentsPreviewPage: React.FC = () => {
 
       dispatch(setPresentationId(createResponse.id));
       trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/outline" });
-      router.replace("/outline");
+      router.replace(`/outline?id=${encodeURIComponent(createResponse.id)}`);
     } catch (error: any) {
       console.error("Error in radar presentation creation:", error);
       toast.error("Error", {
