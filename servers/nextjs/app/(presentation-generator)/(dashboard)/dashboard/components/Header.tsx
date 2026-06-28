@@ -13,7 +13,11 @@ const Header = () => {
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-3">
             {/* {(pathname !== "/upload" && pathname !== "/dashboard") && <BackBtn />} */}
-            <Link href="/dashboard" onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/dashboard" })}>
+            <Link
+              href="/dashboard"
+              prefetch={false}
+              onClick={() => trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/dashboard" })}
+            >
             </Link>
           </div>
 
