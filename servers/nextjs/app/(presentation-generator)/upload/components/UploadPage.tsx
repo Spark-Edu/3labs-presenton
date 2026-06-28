@@ -28,6 +28,8 @@ import { setPptGenUploadState } from "@/store/slices/presentationGenUpload";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { ConfigurationSelects } from "./ConfigurationSelects";
 
+const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
+
 // Types for loading state
 interface LoadingState {
   isLoading: boolean;
@@ -89,6 +91,11 @@ const UploadPage = () => {
    */
   const handleConfigChange = (key: keyof PresentationConfig, value: string) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const goToOutline = (presentationId: string) => {
+    sessionStorage.setItem(LAST_PRESENTATION_ID_KEY, presentationId);
+    window.location.assign(`/outline?id=${encodeURIComponent(presentationId)}`);
   };
 
   /**
@@ -193,7 +200,7 @@ const UploadPage = () => {
     dispatch(setPresentationId(createResponse.id));
     dispatch(clearOutlines())
     trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/outline" });
-    router.push(`/outline?id=${encodeURIComponent(createResponse.id)}`);
+    goToOutline(createResponse.id);
   };
 
   /**

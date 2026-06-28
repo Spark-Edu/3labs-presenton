@@ -20,6 +20,8 @@ import TemplateSelection from "./TemplateSelection";
 import { TemplateLayoutsWithSettings } from "@/app/presentation-templates/utils";
 import { Separator } from "@/components/ui/separator";
 
+const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
+
 const OutlinePage: React.FC = () => {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
@@ -27,14 +29,25 @@ const OutlinePage: React.FC = () => {
     (state: RootState) => state.presentationGeneration
   );
   const queryPresentationId = searchParams.get("id");
-  const effectivePresentationId = presentation_id || queryPresentationId;
+  const [storedPresentationId, setStoredPresentationId] = useState<string | null>(null);
+  const effectivePresentationId = presentation_id || queryPresentationId || storedPresentationId;
 
   const [activeTab, setActiveTab] = useState<string>(TABS.OUTLINE);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateLayoutsWithSettings | null>(null);
 
   useEffect(() => {
-    if (queryPresentationId && queryPresentationId !== presentation_id) {
-      dispatch(setPresentationId(queryPresentationId));
+    if (queryPresentationId) {
+      sessionStorage.setItem(LAST_PRESENTATION_ID_KEY, queryPresentationId);
+      if (queryPresentationId !== presentation_id) {
+        dispatch(setPresentationId(queryPresentationId));
+      }
+      return;
+    }
+
+    const lastPresentationId = sessionStorage.getItem(LAST_PRESENTATION_ID_KEY);
+    setStoredPresentationId(lastPresentationId);
+    if (lastPresentationId && lastPresentationId !== presentation_id) {
+      dispatch(setPresentationId(lastPresentationId));
     }
   }, [dispatch, presentation_id, queryPresentationId]);
 
