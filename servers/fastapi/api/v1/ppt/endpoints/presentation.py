@@ -65,6 +65,7 @@ from utils.process_slides import (
     process_slide_add_placeholder_assets,
     process_slide_and_fetch_assets,
 )
+from utils.ai_metering import reset_metering_context, set_metering_context
 import uuid
 
 
@@ -506,8 +507,19 @@ async def generate_presentation_handler(
     presentation_id: uuid.UUID,
     async_status: Optional[AsyncPresentationGenerationTaskModel],
     user_id: str = "local",
+    org_id: Optional[str] = None,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
+    metering_token = set_metering_context(
+        {
+            "mongoOrgId": org_id,
+            "userId": user_id,
+            "actorRole": "trainer",
+            "resourceType": "presentation",
+            "resourceId": str(presentation_id),
+            "jobId": str(async_status.id if async_status else presentation_id),
+        }
+    )
     try:
         using_slides_markdown = False
 
@@ -815,17 +827,26 @@ async def generate_presentation_handler(
 
         else:
             raise e
+    finally:
+        reset_metering_context(metering_token)
 
 
 @PRESENTATION_ROUTER.post("/generate", response_model=PresentationPathAndEditPath)
 async def generate_presentation_sync(
     request: GeneratePresentationRequest,
+    x_user_id: str = Header(default="local"),
+    x_org_id: Optional[str] = Header(default=None),
     sql_session: AsyncSession = Depends(get_async_session),
 ):
     try:
         (presentation_id,) = await check_if_api_request_is_valid(request, sql_session)
         return await generate_presentation_handler(
-            request, presentation_id, None, sql_session
+            request=request,
+            presentation_id=presentation_id,
+            async_status=None,
+            sql_session=sql_session,
+            user_id=x_user_id,
+            org_id=x_org_id,
         )
     except Exception:
         traceback.print_exc()
@@ -840,6 +861,7 @@ async def generate_presentation_async(
     background_tasks: BackgroundTasks,
     sql_session: AsyncSession = Depends(get_async_session),
     x_user_id: str = Header(default="local"),
+    x_org_id: Optional[str] = Header(default=None),
 ):
     try:
         (presentation_id,) = await check_if_api_request_is_valid(request, sql_session)
@@ -859,6 +881,7 @@ async def generate_presentation_async(
             async_status=async_status,
             sql_session=sql_session,
             user_id=x_user_id,
+            org_id=x_org_id,
         )
         return async_status
 

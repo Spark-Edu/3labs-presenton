@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -11,26 +11,44 @@ from utils.asset_directory_utils import get_images_directory
 import os
 import uuid
 from utils.file_utils import get_file_name_with_random_uuid
+from utils.ai_metering import reset_metering_context, set_metering_context
 
 IMAGES_ROUTER = APIRouter(prefix="/images", tags=["Images"])
 
 
 @IMAGES_ROUTER.get("/generate")
 async def generate_image(
-    prompt: str, sql_session: AsyncSession = Depends(get_async_session)
+    prompt: str,
+    x_user_id: str = Header(default="local"),
+    x_org_id: Optional[str] = Header(default=None),
+    sql_session: AsyncSession = Depends(get_async_session),
 ):
+    job_id = str(uuid.uuid4())
+    metering_token = set_metering_context(
+        {
+            "mongoOrgId": x_org_id,
+            "userId": x_user_id,
+            "actorRole": "trainer",
+            "resourceType": "image",
+            "resourceId": job_id,
+            "jobId": job_id,
+        }
+    )
     images_directory = get_images_directory()
     image_prompt = ImagePrompt(prompt=prompt)
     image_generation_service = ImageGenerationService(images_directory)
 
-    image = await image_generation_service.generate_image(image_prompt)
-    if not isinstance(image, ImageAsset):
-        return image
+    try:
+        image = await image_generation_service.generate_image(image_prompt)
+        if not isinstance(image, ImageAsset):
+            return image
 
-    sql_session.add(image)
-    await sql_session.commit()
+        sql_session.add(image)
+        await sql_session.commit()
 
-    return image.path
+        return image.path
+    finally:
+        reset_metering_context(metering_token)
 
 
 @IMAGES_ROUTER.get("/generated", response_model=List[ImageAsset])

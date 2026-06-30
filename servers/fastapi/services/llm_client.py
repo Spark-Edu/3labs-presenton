@@ -71,6 +71,7 @@ from utils.schema_utils import (
     flatten_json_schema,
     remove_titles_from_schema,
 )
+from utils.ai_metering import commit_usage, refund_reservation, reserve_credits, stable_key
 
 
 
@@ -632,45 +633,58 @@ class LLMClient:
         tools: Optional[List[type[LLMTool] | LLMDynamicTool]] = None,
     ):
         parsed_tools = self.tool_calls_handler.parse_tools(tools)
+        idempotency_key = stable_key("3labs-presenton", "llm-generate", [
+            self.llm_provider.value,
+            model,
+            [getattr(message, "content", "") for message in messages],
+        ])
+        reserved = await reserve_credits("llm-generate", 2, idempotency_key)
 
         content = None
-        match self.llm_provider:
-            case LLMProvider.OPENAI:
-                content = await self._generate_openai(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    tools=parsed_tools,
-                )
-            case LLMProvider.CODEX:
-                content = await self._generate_codex(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    tools=parsed_tools,
-                )
-            case LLMProvider.GOOGLE:
-                content = await self._generate_google(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    tools=parsed_tools,
-                )
-            case LLMProvider.ANTHROPIC:
-                content = await self._generate_anthropic(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    tools=parsed_tools,
-                )
-            case LLMProvider.OLLAMA:
-                content = await self._generate_ollama(
-                    model=model, messages=messages, max_tokens=max_tokens
-                )
-            case LLMProvider.CUSTOM:
-                content = await self._generate_custom(
-                    model=model, messages=messages, max_tokens=max_tokens
-                )
+        try:
+            match self.llm_provider:
+                case LLMProvider.OPENAI:
+                    content = await self._generate_openai(
+                        model=model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        tools=parsed_tools,
+                    )
+                case LLMProvider.CODEX:
+                    content = await self._generate_codex(
+                        model=model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        tools=parsed_tools,
+                    )
+                case LLMProvider.GOOGLE:
+                    content = await self._generate_google(
+                        model=model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        tools=parsed_tools,
+                    )
+                case LLMProvider.ANTHROPIC:
+                    content = await self._generate_anthropic(
+                        model=model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        tools=parsed_tools,
+                    )
+                case LLMProvider.OLLAMA:
+                    content = await self._generate_ollama(
+                        model=model, messages=messages, max_tokens=max_tokens
+                    )
+                case LLMProvider.CUSTOM:
+                    content = await self._generate_custom(
+                        model=model, messages=messages, max_tokens=max_tokens
+                    )
+            if reserved:
+                await commit_usage(idempotency_key, 2, {"provider": self.llm_provider.value, "model": model})
+        except Exception:
+            if reserved:
+                await refund_reservation(idempotency_key)
+            raise
         if content is None:
             raise HTTPException(
                 status_code=400,
@@ -1077,67 +1091,83 @@ class LLMClient:
         max_tokens: Optional[int] = None,
     ) -> dict:
         parsed_tools = self.tool_calls_handler.parse_tools(tools)
+        idempotency_key = stable_key("3labs-presenton", "llm-generate-structured", [
+            self.llm_provider.value,
+            model,
+            [getattr(message, "content", "") for message in messages],
+            response_format,
+        ])
+        reserved = await reserve_credits("llm-generate-structured", 2, idempotency_key)
 
-        for attempt in range(3):
-            content = None
-            match self.llm_provider:
-                case LLMProvider.OPENAI:
-                    content = await self._generate_openai_structured(
-                        model=model,
-                        messages=messages,
-                        response_format=response_format,
-                        strict=strict,
-                        tools=parsed_tools,
-                        max_tokens=max_tokens,
-                    )
-                case LLMProvider.CODEX:
-                    content = await self._generate_codex_structured(
-                        model=model,
-                        messages=messages,
-                        response_format=response_format,
-                        strict=strict,
-                        tools=parsed_tools,
-                        max_tokens=max_tokens,
-                    )
-                case LLMProvider.GOOGLE:
-                    content = await self._generate_google_structured(
-                        model=model,
-                        messages=messages,
-                        response_format=response_format,
-                        tools=parsed_tools,
-                        max_tokens=max_tokens,
-                    )
-                case LLMProvider.ANTHROPIC:
-                    content = await self._generate_anthropic_structured(
-                        model=model,
-                        messages=messages,
-                        response_format=response_format,
-                        tools=parsed_tools,
-                        max_tokens=max_tokens,
-                    )
-                case LLMProvider.OLLAMA:
-                    content = await self._generate_ollama_structured(
-                        model=model,
-                        messages=messages,
-                        response_format=response_format,
-                        strict=strict,
-                        max_tokens=max_tokens,
-                    )
-                case LLMProvider.CUSTOM:
-                    content = await self._generate_custom_structured(
-                        model=model,
-                        messages=messages,
-                        response_format=response_format,
-                        strict=strict,
-                        max_tokens=max_tokens,
-                    )
+        try:
+            for attempt in range(3):
+                content = None
+                match self.llm_provider:
+                    case LLMProvider.OPENAI:
+                        content = await self._generate_openai_structured(
+                            model=model,
+                            messages=messages,
+                            response_format=response_format,
+                            strict=strict,
+                            tools=parsed_tools,
+                            max_tokens=max_tokens,
+                        )
+                    case LLMProvider.CODEX:
+                        content = await self._generate_codex_structured(
+                            model=model,
+                            messages=messages,
+                            response_format=response_format,
+                            strict=strict,
+                            tools=parsed_tools,
+                            max_tokens=max_tokens,
+                        )
+                    case LLMProvider.GOOGLE:
+                        content = await self._generate_google_structured(
+                            model=model,
+                            messages=messages,
+                            response_format=response_format,
+                            tools=parsed_tools,
+                            max_tokens=max_tokens,
+                        )
+                    case LLMProvider.ANTHROPIC:
+                        content = await self._generate_anthropic_structured(
+                            model=model,
+                            messages=messages,
+                            response_format=response_format,
+                            tools=parsed_tools,
+                            max_tokens=max_tokens,
+                        )
+                    case LLMProvider.OLLAMA:
+                        content = await self._generate_ollama_structured(
+                            model=model,
+                            messages=messages,
+                            response_format=response_format,
+                            strict=strict,
+                            max_tokens=max_tokens,
+                        )
+                    case LLMProvider.CUSTOM:
+                        content = await self._generate_custom_structured(
+                            model=model,
+                            messages=messages,
+                            response_format=response_format,
+                            strict=strict,
+                            max_tokens=max_tokens,
+                        )
 
-            if content is not None:
-                return content
+                if content is not None:
+                    if reserved:
+                        await commit_usage(idempotency_key, 2, {"provider": self.llm_provider.value, "model": model})
+                    return content
 
-            if attempt < 2:
-                await asyncio.sleep(0.5 * (attempt + 1))
+                if attempt < 2:
+                    await asyncio.sleep(0.5 * (attempt + 1))
+        except Exception:
+            if reserved:
+                await refund_reservation(idempotency_key)
+            raise
 
+        if reserved:
+            await refund_reservation(idempotency_key)
         raise HTTPException(
             status_code=400,
             detail="LLM did not return any content",
@@ -2268,10 +2298,16 @@ class LLMClient:
         max_tokens: Optional[int] = None,
     ):
         parsed_tools = self.tool_calls_handler.parse_tools(tools)
+        idempotency_key = stable_key("3labs-presenton", "llm-stream-structured", [
+            self.llm_provider.value,
+            model,
+            [getattr(message, "content", "") for message in messages],
+            response_format,
+        ])
 
         match self.llm_provider:
             case LLMProvider.OPENAI:
-                return self._stream_openai_structured(
+                inner = self._stream_openai_structured(
                     model=model,
                     messages=messages,
                     response_format=response_format,
@@ -2280,7 +2316,7 @@ class LLMClient:
                     max_tokens=max_tokens,
                 )
             case LLMProvider.CODEX:
-                return self._stream_codex_structured(
+                inner = self._stream_codex_structured(
                     model=model,
                     messages=messages,
                     response_format=response_format,
@@ -2289,7 +2325,7 @@ class LLMClient:
                     max_tokens=max_tokens,
                 )
             case LLMProvider.GOOGLE:
-                return self._stream_google_structured(
+                inner = self._stream_google_structured(
                     model=model,
                     messages=messages,
                     response_format=response_format,
@@ -2297,7 +2333,7 @@ class LLMClient:
                     max_tokens=max_tokens,
                 )
             case LLMProvider.ANTHROPIC:
-                return self._stream_anthropic_structured(
+                inner = self._stream_anthropic_structured(
                     model=model,
                     messages=messages,
                     response_format=response_format,
@@ -2305,7 +2341,7 @@ class LLMClient:
                     max_tokens=max_tokens,
                 )
             case LLMProvider.OLLAMA:
-                return self._stream_ollama_structured(
+                inner = self._stream_ollama_structured(
                     model=model,
                     messages=messages,
                     response_format=response_format,
@@ -2313,13 +2349,27 @@ class LLMClient:
                     max_tokens=max_tokens,
                 )
             case LLMProvider.CUSTOM:
-                return self._stream_custom_structured(
+                inner = self._stream_custom_structured(
                     model=model,
                     messages=messages,
                     response_format=response_format,
                     strict=strict,
                     max_tokens=max_tokens,
                 )
+
+        async def metered_stream():
+            reserved = await reserve_credits("llm-stream-structured", 5, idempotency_key)
+            try:
+                async for chunk in inner:
+                    yield chunk
+                if reserved:
+                    await commit_usage(idempotency_key, 5, {"provider": self.llm_provider.value, "model": model})
+            except Exception:
+                if reserved:
+                    await refund_reservation(idempotency_key)
+                raise
+
+        return metered_stream()
 
     # ? Web search
     async def _search_openai(self, query: str) -> str:

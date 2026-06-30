@@ -26,6 +26,7 @@ from utils.image_provider import (
     is_dalle3_selected,
     is_comfyui_selected,
 )
+from utils.ai_metering import commit_usage, refund_reservation, reserve_credits, stable_key
 import uuid
 
 
@@ -58,6 +59,19 @@ class ImageGenerationService:
     def is_stock_provider_selected(self):
         return is_pixels_selected() or is_pixabay_selected()
 
+    def selected_ai_provider(self) -> tuple[str, str]:
+        if is_gemini_flash_selected():
+            return ("google", "gemini-2.5-flash-image-preview")
+        if is_nanobanana_pro_selected():
+            return ("google", "gemini-3-pro-image-preview")
+        if is_dalle3_selected():
+            return ("openai", "dall-e-3")
+        if is_gpt_image_1_5_selected():
+            return ("openai", "gpt-image-1.5")
+        if is_comfyui_selected():
+            return ("comfyui", "workflow")
+        return ("unknown", "unknown")
+
     async def generate_image(self, prompt: ImagePrompt) -> str | ImageAsset:
         """
         Generates an image based on the provided prompt.
@@ -79,10 +93,21 @@ class ImageGenerationService:
         )
         print(f"Request - Generating Image for {image_prompt}")
 
+        provider, model = self.selected_ai_provider()
+        idempotency_key = stable_key(
+            "3labs-presenton",
+            "image-generation",
+            [provider, model, image_prompt],
+        )
+        reserved = False
+
         try:
             if self.is_stock_provider_selected():
                 image_path = await self.image_gen_func(image_prompt)
             else:
+                reserved = await reserve_credits(
+                    "image-generation", 8, idempotency_key
+                )
                 image_path = await self.image_gen_func(
                     image_prompt, self.output_directory
                 )
@@ -90,6 +115,12 @@ class ImageGenerationService:
                 if image_path.startswith("http"):
                     return image_path
                 elif os.path.exists(image_path):
+                    if reserved:
+                        await commit_usage(
+                            idempotency_key,
+                            8,
+                            {"provider": provider, "model": model, "imageCount": 1},
+                        )
                     return ImageAsset(
                         path=image_path,
                         is_uploaded=False,
@@ -102,6 +133,8 @@ class ImageGenerationService:
 
         except Exception as e:
             print(f"Error generating image: {e}")
+            if reserved:
+                await refund_reservation(idempotency_key)
             return "/static/images/placeholder.jpg"
 
     async def generate_image_openai(
