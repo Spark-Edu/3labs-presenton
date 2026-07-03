@@ -29,6 +29,7 @@ import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { ConfigurationSelects } from "./ConfigurationSelects";
 
 const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
+const LESSON_SLIDE_SEED_MESSAGE_TYPE = "3labs_lesson_slide_seed";
 
 // Types for loading state
 interface LoadingState {
@@ -37,6 +38,23 @@ interface LoadingState {
   duration?: number;
   showProgress?: boolean;
   extra_info?: string;
+}
+
+type LessonSlideSeedPayload = {
+  prompt?: unknown;
+  language?: unknown;
+  nSlides?: unknown;
+  userId?: unknown;
+};
+
+function normalizeSeedSlides(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return value;
+  }
+  return null;
 }
 
 const UploadPage = () => {
@@ -82,6 +100,33 @@ const UploadPage = () => {
         ...(nSlides ? { slides: nSlides } : {}),
       }));
     }
+  }, []);
+
+  useEffect(() => {
+    function handleLessonSeedMessage(event: MessageEvent) {
+      const data = event.data;
+      if (event.source !== window.parent) return;
+      if (!data || data.type !== LESSON_SLIDE_SEED_MESSAGE_TYPE) return;
+
+      const payload = (data.payload ?? {}) as LessonSlideSeedPayload;
+      const prompt = typeof payload.prompt === "string" ? payload.prompt : "";
+      if (!prompt.trim()) return;
+
+      const language = typeof payload.language === "string" ? payload.language : null;
+      const slides = normalizeSeedSlides(payload.nSlides);
+      const userId = typeof payload.userId === "string" ? payload.userId : "";
+
+      if (userId) localStorage.setItem('presenton_user_id', userId);
+      setConfig((prev) => ({
+        ...prev,
+        prompt,
+        ...(language ? { language: language as typeof prev.language } : {}),
+        ...(slides ? { slides } : {}),
+      }));
+    }
+
+    window.addEventListener("message", handleLessonSeedMessage);
+    return () => window.removeEventListener("message", handleLessonSeedMessage);
   }, []);
 
   /**
