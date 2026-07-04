@@ -24,7 +24,7 @@ export function readPresentonLocale(value?: string | null): PresentonLocale | nu
   return null;
 }
 
-export function resolvePresentonLocale(value?: string | null, fallback: PresentonLocale = "vi"): PresentonLocale {
+export function resolvePresentonLocale(value?: string | null, fallback: PresentonLocale = "en"): PresentonLocale {
   return readPresentonLocale(value) ?? fallback;
 }
 
@@ -52,22 +52,11 @@ function getBrowserLocale(): PresentonLocale | null {
   return readPresentonLocale(navigator.language);
 }
 
-function isEmbedded(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-}
-
 function getInitialLocale(): PresentonLocale {
   const urlLocale = getUrlLocale();
   if (urlLocale) return urlLocale;
 
-  if (isEmbedded()) return "vi";
-
-  return getStoredLocale() ?? getBrowserLocale() ?? "vi";
+  return getStoredLocale() ?? getBrowserLocale() ?? "en";
 }
 
 function extractMessageLocale(data: unknown): PresentonLocale | null {
