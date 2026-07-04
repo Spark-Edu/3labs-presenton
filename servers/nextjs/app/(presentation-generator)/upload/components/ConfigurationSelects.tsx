@@ -33,12 +33,15 @@ import ToolTip from "@/components/ToolTip";
 interface ConfigurationSelectsProps {
     config: PresentationConfig;
     onConfigChange: (key: keyof PresentationConfig, value: any) => void;
+    maxSlides?: number;
 }
 
 type SlideOption = "5" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "20";
+type SlideOptionValue = SlideOption | "25" | "30" | "40" | "50" | "75" | "100";
 
 // Constants
 const SLIDE_OPTIONS: SlideOption[] = ["5", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"];
+const STANDALONE_SLIDE_OPTIONS: SlideOptionValue[] = [...SLIDE_OPTIONS, "25", "30", "40", "50", "75", "100"];
 
 /**
  * Renders a select component for slide count
@@ -46,9 +49,13 @@ const SLIDE_OPTIONS: SlideOption[] = ["5", "8", "9", "10", "11", "12", "13", "14
 const SlideCountSelect: React.FC<{
     value: string | null;
     onValueChange: (value: string) => void;
-}> = ({ value, onValueChange }) => {
+    maxSlides?: number;
+}> = ({ value, onValueChange, maxSlides }) => {
+    const slideOptions = maxSlides
+        ? SLIDE_OPTIONS.filter((option) => Number(option) <= maxSlides)
+        : STANDALONE_SLIDE_OPTIONS;
     const [customInput, setCustomInput] = useState(
-        value && !SLIDE_OPTIONS.includes(value as SlideOption) ? value : ""
+        value && !slideOptions.includes(value as SlideOptionValue) ? value : ""
     );
 
     const sanitizeToPositiveInteger = (raw: string): string => {
@@ -61,8 +68,9 @@ const SlideCountSelect: React.FC<{
 
     const applyCustomValue = () => {
         const sanitized = sanitizeToPositiveInteger(customInput);
-        if (sanitized && Number(sanitized) > 0) {
-            onValueChange(sanitized);
+        const numeric = Number(sanitized);
+        if (sanitized && numeric > 0) {
+            onValueChange(String(maxSlides ? Math.min(numeric, maxSlides) : numeric));
         }
     };
 
@@ -109,13 +117,13 @@ const SlideCountSelect: React.FC<{
                 </div>
 
                 {/* Hidden item to allow SelectValue to render custom selection */}
-                {value && !SLIDE_OPTIONS.includes(value as SlideOption) && (
+                {value && !slideOptions.includes(value as SlideOptionValue) && (
                     <SelectItem value={value} className="hidden">
                         {value} slides
                     </SelectItem>
                 )}
 
-                {SLIDE_OPTIONS.map((option) => (
+                {slideOptions.map((option) => (
                     <SelectItem
                         key={option}
                         value={option}
@@ -199,6 +207,7 @@ const LanguageSelect: React.FC<{
 export function ConfigurationSelects({
     config,
     onConfigChange,
+    maxSlides,
 }: ConfigurationSelectsProps) {
     const [openLanguage, setOpenLanguage] = useState(false);
     const [openAdvanced, setOpenAdvanced] = useState(false);
@@ -241,6 +250,7 @@ export function ConfigurationSelects({
             <SlideCountSelect
                 value={config.slides}
                 onValueChange={(value) => onConfigChange("slides", value)}
+                maxSlides={maxSlides}
             />
             <LanguageSelect
                 value={config.language}

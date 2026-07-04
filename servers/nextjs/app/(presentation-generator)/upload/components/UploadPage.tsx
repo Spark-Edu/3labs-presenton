@@ -30,6 +30,7 @@ import { ConfigurationSelects } from "./ConfigurationSelects";
 
 const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
 const LESSON_SLIDE_SEED_MESSAGE_TYPE = "3labs_lesson_slide_seed";
+const LESSON_MAX_SLIDES = 20;
 
 // Types for loading state
 interface LoadingState {
@@ -45,22 +46,29 @@ type LessonSlideSeedPayload = {
   language?: unknown;
   nSlides?: unknown;
   userId?: unknown;
+  deckScope?: unknown;
 };
 
-function normalizeSeedSlides(value: unknown): string | null {
+function normalizeSeedSlides(value: unknown, maxSlides?: number): string | null {
+  let numeric: number | null = null;
   if (typeof value === "number" && Number.isFinite(value)) {
-    return String(value);
+    numeric = value;
   }
   if (typeof value === "string" && value.trim()) {
-    return value;
+    numeric = Number(value);
   }
-  return null;
+  if (!numeric || !Number.isFinite(numeric) || numeric <= 0) return null;
+
+  const rounded = Math.round(numeric);
+  return String(maxSlides ? Math.min(rounded, maxSlides) : rounded);
 }
 
 const UploadPage = () => {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const [isLessonDeck, setIsLessonDeck] = useState(searchParams.get('deck_scope') === 'lesson');
 
   // State management
   const [files, setFiles] = useState<File[]>([]);
@@ -76,7 +84,6 @@ const UploadPage = () => {
     webSearch: false,
   });
 
-  const searchParams = useSearchParams();
   const [loadingState, setLoadingState] = useState<LoadingState>({
     isLoading: false,
     message: "",
@@ -89,8 +96,13 @@ const UploadPage = () => {
   useEffect(() => {
     const prompt = searchParams.get('prompt');
     const language = searchParams.get('language');
-    const nSlides = searchParams.get('n_slides');
+    const isLessonScope = searchParams.get('deck_scope') === 'lesson';
+    const nSlides = normalizeSeedSlides(
+      searchParams.get('n_slides'),
+      isLessonScope ? LESSON_MAX_SLIDES : undefined,
+    );
     const userId = searchParams.get('userId');
+    setIsLessonDeck(isLessonScope);
     if (userId) localStorage.setItem('presenton_user_id', userId);
     if (prompt || language || nSlides) {
       setConfig((prev) => ({
@@ -113,9 +125,11 @@ const UploadPage = () => {
       if (!prompt.trim()) return;
 
       const language = typeof payload.language === "string" ? payload.language : null;
-      const slides = normalizeSeedSlides(payload.nSlides);
+      const isLessonScope = payload.deckScope === "lesson";
+      const slides = normalizeSeedSlides(payload.nSlides, isLessonScope ? LESSON_MAX_SLIDES : undefined);
       const userId = typeof payload.userId === "string" ? payload.userId : "";
 
+      setIsLessonDeck(isLessonScope);
       if (userId) localStorage.setItem('presenton_user_id', userId);
       setConfig((prev) => ({
         ...prev,
@@ -282,6 +296,7 @@ const UploadPage = () => {
           <ConfigurationSelects
             config={config}
             onConfigChange={handleConfigChange}
+            maxSlides={isLessonDeck ? LESSON_MAX_SLIDES : undefined}
           />
         </div>
         <div className="border-t border-slate-200/70" />
