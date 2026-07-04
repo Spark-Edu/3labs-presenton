@@ -54,11 +54,17 @@ type LessonSlideSeedPayload = {
 
 type LocaleSyncPayload = {
   uiLocale?: unknown;
+  locale?: unknown;
+  lang?: unknown;
 };
 
 function getStoredUploadLocale(): UploadLocale {
   if (typeof window === "undefined") return "en";
   return resolveUploadLocale(localStorage.getItem("presenton_ui_locale"));
+}
+
+function getUrlUploadLocale(searchParams: ReturnType<typeof useSearchParams>): string | null {
+  return searchParams.get("ui_locale") ?? searchParams.get("locale") ?? searchParams.get("lang");
 }
 
 function normalizeSeedSlides(value: unknown, maxSlides?: number): string | null {
@@ -81,7 +87,7 @@ const UploadPage = () => {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const [uiLocale, setUiLocale] = useState<UploadLocale>(() =>
-    resolveUploadLocale(searchParams.get('ui_locale'), getStoredUploadLocale()),
+    resolveUploadLocale(getUrlUploadLocale(searchParams), getStoredUploadLocale()),
   );
   const [isLessonDeck, setIsLessonDeck] = useState(searchParams.get('deck_scope') === 'lesson');
   const copy = uploadCopy[uiLocale];
@@ -121,7 +127,7 @@ const UploadPage = () => {
   useEffect(() => {
     const prompt = searchParams.get('prompt');
     const language = searchParams.get('language');
-    const nextUiLocale = resolveUploadLocale(searchParams.get('ui_locale'), getStoredUploadLocale());
+    const nextUiLocale = resolveUploadLocale(getUrlUploadLocale(searchParams), getStoredUploadLocale());
     const isLessonScope = searchParams.get('deck_scope') === 'lesson';
     const nSlides = normalizeSeedSlides(
       searchParams.get('n_slides'),
@@ -150,7 +156,7 @@ const UploadPage = () => {
 
       if (data.type === PRESENTON_LOCALE_MESSAGE_TYPE) {
         const payload = (data.payload ?? {}) as LocaleSyncPayload;
-        applyUiLocale(payload.uiLocale);
+        applyUiLocale(payload.uiLocale ?? payload.locale ?? payload.lang);
         return;
       }
 
