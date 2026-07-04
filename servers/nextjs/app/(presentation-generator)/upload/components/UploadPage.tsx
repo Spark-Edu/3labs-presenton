@@ -10,7 +10,7 @@
  */
 
 "use client";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -27,11 +27,10 @@ import Wrapper from "@/components/Wrapper";
 import { setPptGenUploadState } from "@/store/slices/presentationGenUpload";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { ConfigurationSelects } from "./ConfigurationSelects";
-import { resolveUploadLocale, uploadCopy, type UploadLocale } from "../i18n";
+import { LESSON_SLIDE_SEED_MESSAGE_TYPE, usePresentonI18n } from "@/app/i18n";
+import { uploadCopy } from "../i18n";
 
 const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
-const LESSON_SLIDE_SEED_MESSAGE_TYPE = "3labs_lesson_slide_seed";
-const PRESENTON_LOCALE_MESSAGE_TYPE = "3labs_presenton_locale";
 const LESSON_MAX_SLIDES = 20;
 
 // Types for loading state
@@ -52,21 +51,6 @@ type LessonSlideSeedPayload = {
   uiLocale?: unknown;
 };
 
-type LocaleSyncPayload = {
-  uiLocale?: unknown;
-  locale?: unknown;
-  lang?: unknown;
-};
-
-function getStoredUploadLocale(): UploadLocale {
-  if (typeof window === "undefined") return "en";
-  return resolveUploadLocale(localStorage.getItem("presenton_ui_locale"));
-}
-
-function getUrlUploadLocale(searchParams: ReturnType<typeof useSearchParams>): string | null {
-  return searchParams.get("ui_locale") ?? searchParams.get("locale") ?? searchParams.get("lang");
-}
-
 function normalizeSeedSlides(value: unknown, maxSlides?: number): string | null {
   let numeric: number | null = null;
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -86,11 +70,9 @@ const UploadPage = () => {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
-  const [uiLocale, setUiLocale] = useState<UploadLocale>(() =>
-    resolveUploadLocale(getUrlUploadLocale(searchParams), getStoredUploadLocale()),
-  );
+  const { locale } = usePresentonI18n();
   const [isLessonDeck, setIsLessonDeck] = useState(searchParams.get('deck_scope') === 'lesson');
-  const copy = uploadCopy[uiLocale];
+  const copy = uploadCopy[locale];
 
   // State management
   const [files, setFiles] = useState<File[]>([]);
@@ -114,28 +96,16 @@ const UploadPage = () => {
     extra_info: "",
   });
 
-  const applyUiLocale = useCallback((value: unknown) => {
-    if (typeof value !== "string") return;
-    setUiLocale((current) => {
-      const next = resolveUploadLocale(value, current);
-      localStorage.setItem("presenton_ui_locale", next);
-      return next;
-    });
-  }, []);
-
   // Pre-fill config from URL params when launched from 3Labs lesson builder
   useEffect(() => {
     const prompt = searchParams.get('prompt');
     const language = searchParams.get('language');
-    const nextUiLocale = resolveUploadLocale(getUrlUploadLocale(searchParams), getStoredUploadLocale());
     const isLessonScope = searchParams.get('deck_scope') === 'lesson';
     const nSlides = normalizeSeedSlides(
       searchParams.get('n_slides'),
       isLessonScope ? LESSON_MAX_SLIDES : undefined,
     );
     const userId = searchParams.get('userId');
-    setUiLocale(nextUiLocale);
-    localStorage.setItem('presenton_ui_locale', nextUiLocale);
     setIsLessonDeck(isLessonScope);
     if (userId) localStorage.setItem('presenton_user_id', userId);
     if (prompt || language || nSlides) {
@@ -153,17 +123,9 @@ const UploadPage = () => {
       const data = event.data;
       if (event.source !== window.parent) return;
       if (!data) return;
-
-      if (data.type === PRESENTON_LOCALE_MESSAGE_TYPE) {
-        const payload = (data.payload ?? {}) as LocaleSyncPayload;
-        applyUiLocale(payload.uiLocale ?? payload.locale ?? payload.lang);
-        return;
-      }
-
       if (data.type !== LESSON_SLIDE_SEED_MESSAGE_TYPE) return;
 
       const payload = (data.payload ?? {}) as LessonSlideSeedPayload;
-      applyUiLocale(payload.uiLocale);
       const prompt = typeof payload.prompt === "string" ? payload.prompt : "";
       if (!prompt.trim()) return;
 
@@ -184,7 +146,7 @@ const UploadPage = () => {
 
     window.addEventListener("message", handleLessonSeedMessage);
     return () => window.removeEventListener("message", handleLessonSeedMessage);
-  }, [applyUiLocale]);
+  }, []);
 
   /**
    * Updates the presentation configuration

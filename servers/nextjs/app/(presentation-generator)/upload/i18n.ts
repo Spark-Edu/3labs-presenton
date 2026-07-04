@@ -1,16 +1,10 @@
-export type UploadLocale = "en" | "vi";
+import type { PresentonLocale } from "@/app/i18n";
+import { readPresentonLocale, resolvePresentonLocale } from "@/app/i18n";
 
-export function readUploadLocale(value?: string | null): UploadLocale | null {
-  if (!value) return null;
-  const normalized = value.toLowerCase();
-  if (normalized.startsWith("vi")) return "vi";
-  if (normalized.startsWith("en")) return "en";
-  return null;
-}
+export type UploadLocale = PresentonLocale;
 
-export function resolveUploadLocale(value?: string | null, fallback: UploadLocale = "en"): UploadLocale {
-  return readUploadLocale(value) ?? fallback;
-}
+export const readUploadLocale = readPresentonLocale;
+export const resolveUploadLocale = resolvePresentonLocale;
 
 export const uploadCopy = {
   en: {
