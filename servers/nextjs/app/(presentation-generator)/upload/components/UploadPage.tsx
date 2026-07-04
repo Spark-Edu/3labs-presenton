@@ -10,7 +10,7 @@
  */
 
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -31,6 +31,7 @@ import { resolveUploadLocale, uploadCopy, type UploadLocale } from "../i18n";
 
 const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
 const LESSON_SLIDE_SEED_MESSAGE_TYPE = "3labs_lesson_slide_seed";
+const PRESENTON_LOCALE_MESSAGE_TYPE = "3labs_presenton_locale";
 const LESSON_MAX_SLIDES = 20;
 
 // Types for loading state
@@ -51,6 +52,15 @@ type LessonSlideSeedPayload = {
   uiLocale?: unknown;
 };
 
+type LocaleSyncPayload = {
+  uiLocale?: unknown;
+};
+
+function getStoredUploadLocale(): UploadLocale {
+  if (typeof window === "undefined") return "en";
+  return resolveUploadLocale(localStorage.getItem("presenton_ui_locale"));
+}
+
 function normalizeSeedSlides(value: unknown, maxSlides?: number): string | null {
   let numeric: number | null = null;
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -70,7 +80,9 @@ const UploadPage = () => {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
-  const [uiLocale, setUiLocale] = useState<UploadLocale>(() => resolveUploadLocale(searchParams.get('ui_locale')));
+  const [uiLocale, setUiLocale] = useState<UploadLocale>(() =>
+    resolveUploadLocale(searchParams.get('ui_locale'), getStoredUploadLocale()),
+  );
   const [isLessonDeck, setIsLessonDeck] = useState(searchParams.get('deck_scope') === 'lesson');
   const copy = uploadCopy[uiLocale];
 
@@ -96,11 +108,20 @@ const UploadPage = () => {
     extra_info: "",
   });
 
+  const applyUiLocale = useCallback((value: unknown) => {
+    if (typeof value !== "string") return;
+    setUiLocale((current) => {
+      const next = resolveUploadLocale(value, current);
+      localStorage.setItem("presenton_ui_locale", next);
+      return next;
+    });
+  }, []);
+
   // Pre-fill config from URL params when launched from 3Labs lesson builder
   useEffect(() => {
     const prompt = searchParams.get('prompt');
     const language = searchParams.get('language');
-    const nextUiLocale = resolveUploadLocale(searchParams.get('ui_locale'));
+    const nextUiLocale = resolveUploadLocale(searchParams.get('ui_locale'), getStoredUploadLocale());
     const isLessonScope = searchParams.get('deck_scope') === 'lesson';
     const nSlides = normalizeSeedSlides(
       searchParams.get('n_slides'),
@@ -125,20 +146,26 @@ const UploadPage = () => {
     function handleLessonSeedMessage(event: MessageEvent) {
       const data = event.data;
       if (event.source !== window.parent) return;
-      if (!data || data.type !== LESSON_SLIDE_SEED_MESSAGE_TYPE) return;
+      if (!data) return;
+
+      if (data.type === PRESENTON_LOCALE_MESSAGE_TYPE) {
+        const payload = (data.payload ?? {}) as LocaleSyncPayload;
+        applyUiLocale(payload.uiLocale);
+        return;
+      }
+
+      if (data.type !== LESSON_SLIDE_SEED_MESSAGE_TYPE) return;
 
       const payload = (data.payload ?? {}) as LessonSlideSeedPayload;
+      applyUiLocale(payload.uiLocale);
       const prompt = typeof payload.prompt === "string" ? payload.prompt : "";
       if (!prompt.trim()) return;
 
       const language = typeof payload.language === "string" ? payload.language : null;
       const isLessonScope = payload.deckScope === "lesson";
-      const nextUiLocale = resolveUploadLocale(typeof payload.uiLocale === "string" ? payload.uiLocale : null);
       const slides = normalizeSeedSlides(payload.nSlides, isLessonScope ? LESSON_MAX_SLIDES : undefined);
       const userId = typeof payload.userId === "string" ? payload.userId : "";
 
-      setUiLocale(nextUiLocale);
-      localStorage.setItem('presenton_ui_locale', nextUiLocale);
       setIsLessonDeck(isLessonScope);
       if (userId) localStorage.setItem('presenton_user_id', userId);
       setConfig((prev) => ({
@@ -151,7 +178,7 @@ const UploadPage = () => {
 
     window.addEventListener("message", handleLessonSeedMessage);
     return () => window.removeEventListener("message", handleLessonSeedMessage);
-  }, []);
+  }, [applyUiLocale]);
 
   /**
    * Updates the presentation configuration
@@ -289,6 +316,13 @@ const UploadPage = () => {
   };
 
   return (
+    <>
+    <div className="flex flex-col items-center justify-center mb-8">
+      <h1 className="text-[64px] font-normal font-sans text-[#101323] ">
+        {copy.hero.title}
+      </h1>
+      <p className="text-xl font-sans text-[#101323CC]">{copy.hero.subtitle}</p>
+    </div>
     <Wrapper className="pb-10 lg:max-w-[70%] xl:max-w-[65%]">
       <OverlayLoader
         show={loadingState.isLoading}
@@ -350,6 +384,7 @@ const UploadPage = () => {
 
       </div>
     </Wrapper>
+    </>
   );
 };
 

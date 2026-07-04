@@ -3,7 +3,6 @@ import React from "react";
 import UploadPage from "./components/UploadPage";
 import Header from "@/app/(presentation-generator)/(dashboard)/dashboard/components/Header";
 import { Metadata } from "next";
-import { resolveUploadLocale, uploadCopy } from "./i18n";
 
 export const metadata: Metadata = {
   title: "Presenton | Open Source AI presentation generator",
@@ -42,19 +41,10 @@ export const metadata: Metadata = {
   },
 };
 
-const page = ({ searchParams }: { searchParams?: { ui_locale?: string } }) => {
-  const copy = uploadCopy[resolveUploadLocale(searchParams?.ui_locale)];
-
+const page = () => {
   return (
     <div className="relative">
       <Header />
-      <div className="flex flex-col items-center justify-center  mb-8">
-        <h1 className="text-[64px] font-normal font-sans text-[#101323] ">
-          {copy.hero.title}
-        </h1>
-        <p className="text-xl font-sans text-[#101323CC]">{copy.hero.subtitle}</p>
-      </div>
-
       <UploadPage />
     </div>
   );

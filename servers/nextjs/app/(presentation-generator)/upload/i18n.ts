@@ -1,7 +1,15 @@
 export type UploadLocale = "en" | "vi";
 
-export function resolveUploadLocale(value?: string | null): UploadLocale {
-  return value?.toLowerCase().startsWith("vi") ? "vi" : "en";
+export function readUploadLocale(value?: string | null): UploadLocale | null {
+  if (!value) return null;
+  const normalized = value.toLowerCase();
+  if (normalized.startsWith("vi")) return "vi";
+  if (normalized.startsWith("en")) return "en";
+  return null;
+}
+
+export function resolveUploadLocale(value?: string | null, fallback: UploadLocale = "en"): UploadLocale {
+  return readUploadLocale(value) ?? fallback;
 }
 
 export const uploadCopy = {
