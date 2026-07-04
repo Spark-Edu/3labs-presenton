@@ -27,6 +27,7 @@ import Wrapper from "@/components/Wrapper";
 import { setPptGenUploadState } from "@/store/slices/presentationGenUpload";
 import { trackEvent, MixpanelEvent } from "@/utils/mixpanel";
 import { ConfigurationSelects } from "./ConfigurationSelects";
+import { resolveUploadLocale, uploadCopy, type UploadLocale } from "../i18n";
 
 const LAST_PRESENTATION_ID_KEY = "presenton_last_presentation_id";
 const LESSON_SLIDE_SEED_MESSAGE_TYPE = "3labs_lesson_slide_seed";
@@ -47,6 +48,7 @@ type LessonSlideSeedPayload = {
   nSlides?: unknown;
   userId?: unknown;
   deckScope?: unknown;
+  uiLocale?: unknown;
 };
 
 function normalizeSeedSlides(value: unknown, maxSlides?: number): string | null {
@@ -68,7 +70,9 @@ const UploadPage = () => {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
+  const [uiLocale, setUiLocale] = useState<UploadLocale>(() => resolveUploadLocale(searchParams.get('ui_locale')));
   const [isLessonDeck, setIsLessonDeck] = useState(searchParams.get('deck_scope') === 'lesson');
+  const copy = uploadCopy[uiLocale];
 
   // State management
   const [files, setFiles] = useState<File[]>([]);
@@ -96,12 +100,15 @@ const UploadPage = () => {
   useEffect(() => {
     const prompt = searchParams.get('prompt');
     const language = searchParams.get('language');
+    const nextUiLocale = resolveUploadLocale(searchParams.get('ui_locale'));
     const isLessonScope = searchParams.get('deck_scope') === 'lesson';
     const nSlides = normalizeSeedSlides(
       searchParams.get('n_slides'),
       isLessonScope ? LESSON_MAX_SLIDES : undefined,
     );
     const userId = searchParams.get('userId');
+    setUiLocale(nextUiLocale);
+    localStorage.setItem('presenton_ui_locale', nextUiLocale);
     setIsLessonDeck(isLessonScope);
     if (userId) localStorage.setItem('presenton_user_id', userId);
     if (prompt || language || nSlides) {
@@ -126,9 +133,12 @@ const UploadPage = () => {
 
       const language = typeof payload.language === "string" ? payload.language : null;
       const isLessonScope = payload.deckScope === "lesson";
+      const nextUiLocale = resolveUploadLocale(typeof payload.uiLocale === "string" ? payload.uiLocale : null);
       const slides = normalizeSeedSlides(payload.nSlides, isLessonScope ? LESSON_MAX_SLIDES : undefined);
       const userId = typeof payload.userId === "string" ? payload.userId : "";
 
+      setUiLocale(nextUiLocale);
+      localStorage.setItem('presenton_ui_locale', nextUiLocale);
       setIsLessonDeck(isLessonScope);
       if (userId) localStorage.setItem('presenton_user_id', userId);
       setConfig((prev) => ({
@@ -163,12 +173,12 @@ const UploadPage = () => {
    */
   const validateConfiguration = (): boolean => {
     if (!config.language || !config.slides) {
-      toast.error("Please select number of Slides & Language");
+      toast.error(copy.validation.missingConfig);
       return false;
     }
 
     if (!config.prompt.trim() && files.length === 0) {
-      toast.error("No Prompt or Document Provided");
+      toast.error(copy.validation.missingSource);
       return false;
     }
     return true;
@@ -199,10 +209,10 @@ const UploadPage = () => {
   const handleDocumentProcessing = async () => {
     setLoadingState({
       isLoading: true,
-      message: "Processing documents...",
+      message: copy.loading.processingDocuments,
       showProgress: true,
       duration: 90,
-      extra_info: files.length > 0 ? "It might take a few minutes for large documents." : "",
+      extra_info: files.length > 0 ? copy.loading.processingExtra : "",
     });
 
     let documents = [];
@@ -235,7 +245,7 @@ const UploadPage = () => {
   const handleDirectPresentationGeneration = async () => {
     setLoadingState({
       isLoading: true,
-      message: "Generating outlines...",
+      message: copy.loading.generatingOutlines,
       showProgress: true,
       duration: 30,
     });
@@ -273,8 +283,8 @@ const UploadPage = () => {
       duration: 0,
       showProgress: false,
     });
-    toast.error("Error", {
-      description: error.message || "Error in upload page.",
+    toast.error(copy.validation.errorTitle, {
+      description: error.message || copy.validation.genericError,
     });
   };
 
@@ -290,36 +300,37 @@ const UploadPage = () => {
       <div className="rounded-2xl border border-slate-200/70 bg-white/80 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60" >
         <div className="flex flex-col gap-4 md:items-center md:flex-row justify-between p-4">
           <div >
-            <h2 className="text-lg font-sans tracking-tight text-slate-900 ">Configuration</h2>
-            <p className="text-sm text-slate-500 font-sans">Choose slides, tone, and language preferences.</p>
+            <h2 className="text-lg font-sans tracking-tight text-slate-900 ">{copy.config.title}</h2>
+            <p className="text-sm text-slate-500 font-sans">{copy.config.subtitle}</p>
           </div>
           <ConfigurationSelects
             config={config}
             onConfigChange={handleConfigChange}
             maxSlides={isLessonDeck ? LESSON_MAX_SLIDES : undefined}
+            copy={copy.config}
           />
         </div>
         <div className="border-t border-slate-200/70" />
 
         <div className="p-4 md:p-6">
-          <h3 className="text-base font-normal font-sans  text-slate-900 mb-2">Content</h3>
+          <h3 className="text-base font-normal font-sans  text-slate-900 mb-2">{copy.content.title}</h3>
           <div className="relative">
             <PromptInput
               value={config.prompt}
               onChange={(value) => handleConfigChange("prompt", value)}
-              data-testid="prompt-input"
+              placeholder={copy.content.promptPlaceholder}
             />
           </div>
         </div>
         <div className="border-t border-slate-200/70" />
         <div className="p-4 md:p-6">
-          <h3 className="text-base font-normal font-sans text-slate-900 mb-2">Attachments (optional)</h3>
+          <h3 className="text-base font-normal font-sans text-slate-900 mb-2">{copy.attachments.title}</h3>
 
 
           <SupportingDoc
             files={[...files]}
             onFilesChange={setFiles}
-            data-testid="file-upload-input"
+            copy={copy.attachments}
           />
         </div>
         <div className="border-t border-slate-200/70" />
@@ -330,7 +341,7 @@ const UploadPage = () => {
             className="w-full rounded-[28px] flex items-center justify-center py-5 bg-[#5141e5] text-white font-sans font-semibold text-lg hover:bg-[#5141e5]/85 focus-visible:ring-2 focus-visible:ring-[#5141e5]/40"
             data-testid="next-button"
           >
-            <span>Generate Presentation</span>
+            <span>{copy.actions.generate}</span>
             <ChevronRight className="!w-5 !h-5 ml-1.5" />
           </Button>
         </div>

@@ -3,10 +3,12 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { File, Paperclip, X } from 'lucide-react'
 import { toast } from 'sonner'
+import type { UploadCopy } from '../i18n'
 
 interface SupportingDocProps {
     files: File[]
     onFilesChange: (files: File[]) => void
+    copy: UploadCopy['attachments']
     accept?: string
     multiple?: boolean
 }
@@ -48,6 +50,7 @@ const ALLOWED_EXTENSIONS = [
 const SupportingDoc = ({
     files,
     onFilesChange,
+    copy,
     accept = ACCEPT_DEFAULT,
     multiple = true,
 }: SupportingDocProps) => {
@@ -74,8 +77,8 @@ const SupportingDoc = ({
     const handleValidate = (filesToReview: File[]) => {
         const disallowed = filesToReview.filter((file) => !isAllowedFile(file))
         if (disallowed.length > 0) {
-            toast.error('Some files are not supported', {
-                description: 'Only PDF, TXT, PPTX, and DOCX files are allowed.',
+            toast.error(copy.unsupportedTitle, {
+                description: copy.unsupportedDescription,
             })
         }
     }
@@ -90,8 +93,8 @@ const SupportingDoc = ({
         onFilesChange(allowedFiles)
         handleValidate(nextFiles)
         if (allowedFiles.length > files.length) {
-            toast.success('Files selected', {
-                description: `${allowedFiles.length - files.length} file(s) have been added`,
+            toast.success(copy.selectedTitle, {
+                description: copy.selectedDescription(allowedFiles.length - files.length),
             })
         }
         e.currentTarget.value = ''
@@ -110,8 +113,8 @@ const SupportingDoc = ({
         onFilesChange(allowedFiles)
         handleValidate(nextFiles)
         if (allowedFiles.length > files.length) {
-            toast.success('Files selected', {
-                description: `${allowedFiles.length - files.length} file(s) have been added`,
+            toast.success(copy.selectedTitle, {
+                description: copy.selectedDescription(allowedFiles.length - files.length),
             })
         }
     }
@@ -140,7 +143,7 @@ const SupportingDoc = ({
         <div className="space-y-2" data-testid="attachments-uploader">
             <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 font-sans">
-                    {hasFiles ? `${filteredFiles.length} attachment${filteredFiles.length > 1 ? 's' : ''}` : 'No attachments yet'}
+                    {hasFiles ? copy.count(filteredFiles.length) : copy.none}
                 </p>
                 <button
                     type="button"
@@ -150,7 +153,7 @@ const SupportingDoc = ({
                     data-testid="attachments-clear-button"
                     aria-disabled={!hasFiles}
                 >
-                    Clear all
+                    {copy.clearAll}
                 </button>
             </div>
 
@@ -171,14 +174,14 @@ const SupportingDoc = ({
                 <div className="flex flex-col items-center gap-2">
                     <Paperclip className="h-6 w-6 text-[#5146E5]" />
                     <p className="text-sm font-medium text-gray-800 font-sans">
-                        Drag and drop PDF, TXT, PPTX, DOCX, or <span className="text-[#5146E5]">click to browse</span>
+                        {copy.dropPrefix} <span className="text-[#5146E5]">{copy.browse}</span>
                     </p>
                 </div>
             </label>
 
             {hasFiles && (
                 <div className="mt-2">
-                    <ul data-testid="file-list" className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="Attached files">
+                    <ul data-testid="file-list" className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label={copy.listLabel}>
                         {filteredFiles.map((file, idx) => (
                             <li
                                 key={`${file.name}-${idx}`}
@@ -186,7 +189,7 @@ const SupportingDoc = ({
                                 data-testid="attached-file-item"
                             >
                                 {previewUrls[idx] ? (
-                                    <img src={previewUrls[idx] as string} alt="Preview" className="h-10 w-10 flex-none rounded object-cover" />
+                                    <img src={previewUrls[idx] as string} alt={copy.previewAlt} className="h-10 w-10 flex-none rounded object-cover" />
                                 ) : (
                                     <div className="flex h-10 w-10 flex-none items-center justify-center rounded bg-gray-100 text-gray-600">
                                         <File className="h-5 w-5" />
@@ -204,7 +207,7 @@ const SupportingDoc = ({
                                     type="button"
                                     onClick={() => handleRemoveFileAt(idx)}
                                     className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded text-red-600 hover:bg-red-50 hover:text-red-700"
-                                    aria-label={`Remove ${file.name}`}
+                                    aria-label={copy.remove(file.name)}
                                     data-testid="remove-file-button"
                                 >
                                     <X className="h-5 w-5" />
@@ -214,7 +217,7 @@ const SupportingDoc = ({
                     </ul>
                     {filteredFiles.length !== files.length && (
                         <p className="mt-2 text-xs text-amber-600 font-sans">
-                            Some files were skipped. Only PDF, TXT, PPTX, and DOCX files are supported.
+                            {copy.skipped}
                         </p>
                     )}
                 </div>

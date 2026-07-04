@@ -28,12 +28,14 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ToolTip from "@/components/ToolTip";
+import type { UploadCopy } from "../i18n";
 
 // Types
 interface ConfigurationSelectsProps {
     config: PresentationConfig;
     onConfigChange: (key: keyof PresentationConfig, value: any) => void;
     maxSlides?: number;
+    copy: UploadCopy['config'];
 }
 
 type SlideOption = "5" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "20";
@@ -50,7 +52,8 @@ const SlideCountSelect: React.FC<{
     value: string | null;
     onValueChange: (value: string) => void;
     maxSlides?: number;
-}> = ({ value, onValueChange, maxSlides }) => {
+    copy: UploadCopy['config'];
+}> = ({ value, onValueChange, maxSlides, copy }) => {
     const slideOptions = maxSlides
         ? SLIDE_OPTIONS.filter((option) => Number(option) <= maxSlides)
         : STANDALONE_SLIDE_OPTIONS;
@@ -80,7 +83,7 @@ const SlideCountSelect: React.FC<{
                 className="w-[140px]  font-instrument_sans font-medium bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-[#5146E5]/30 flex items-center gap-2 h-10 rounded-xl px-3 ring-1 ring-inset ring-slate-200 shadow-sm"
                 data-testid="slides-select"
             >
-                <div className="flex items-center gap-2.5"><GalleryVertical className="w-4 h-4" /> <SelectValue placeholder="Select Slides" /></div>
+                <div className="flex items-center gap-2.5"><GalleryVertical className="w-4 h-4" /> <SelectValue placeholder={copy.slidesPlaceholder} /></div>
             </SelectTrigger>
             <SelectContent className="font-instrument_sans">
                 {/* Sticky custom input at the top */}
@@ -112,14 +115,14 @@ const SlideCountSelect: React.FC<{
                             placeholder="--"
                             className="h-8 w-16 px-2 text-sm"
                         />
-                        <span className="text-sm font-medium">slides</span>
+                        <span className="text-sm font-medium">{copy.slidesUnit}</span>
                     </div>
                 </div>
 
                 {/* Hidden item to allow SelectValue to render custom selection */}
                 {value && !slideOptions.includes(value as SlideOptionValue) && (
                     <SelectItem value={value} className="hidden">
-                        {value} slides
+                        {value} {copy.slidesUnit}
                     </SelectItem>
                 )}
 
@@ -130,7 +133,7 @@ const SlideCountSelect: React.FC<{
                         className="font-instrument_sans text-sm font-medium"
                         role="option"
                     >
-                        {option} slides
+                        {option} {copy.slidesUnit}
                     </SelectItem>
                 ))}
             </SelectContent>
@@ -146,7 +149,8 @@ const LanguageSelect: React.FC<{
     onValueChange: (value: string) => void;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-}> = ({ value, onValueChange, open, onOpenChange }) => (
+    copy: UploadCopy['config'];
+}> = ({ value, onValueChange, open, onOpenChange, copy }) => (
     <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
             <Button
@@ -162,7 +166,7 @@ const LanguageSelect: React.FC<{
                         <Languages className="w-4 h-4" />
                     </span>
                     <span className="text-sm font-medium truncate">
-                        {value || "Select language"}
+                        {value || copy.languagePlaceholder}
                     </span>
                 </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -171,11 +175,11 @@ const LanguageSelect: React.FC<{
         <PopoverContent className="w-[300px] p-0" align="end">
             <Command>
                 <CommandInput
-                    placeholder="Search language..."
+                    placeholder={copy.languageSearch}
                     className="font-instrument_sans"
                 />
                 <CommandList>
-                    <CommandEmpty>No language found.</CommandEmpty>
+                    <CommandEmpty>{copy.languageEmpty}</CommandEmpty>
                     <CommandGroup>
                         {Object.values(LanguageType).map((language) => (
                             <CommandItem
@@ -208,6 +212,7 @@ export function ConfigurationSelects({
     config,
     onConfigChange,
     maxSlides,
+    copy,
 }: ConfigurationSelectsProps) {
     const [openLanguage, setOpenLanguage] = useState(false);
     const [openAdvanced, setOpenAdvanced] = useState(false);
@@ -251,18 +256,20 @@ export function ConfigurationSelects({
                 value={config.slides}
                 onValueChange={(value) => onConfigChange("slides", value)}
                 maxSlides={maxSlides}
+                copy={copy}
             />
             <LanguageSelect
                 value={config.language}
                 onValueChange={(value) => onConfigChange("language", value)}
                 open={openLanguage}
                 onOpenChange={setOpenLanguage}
+                copy={copy}
             />
-            <ToolTip content="Advanced settings">
+            <ToolTip content={copy.advanced}>
 
                 <button
-                    aria-label="Advanced settings"
-                    title="Advanced settings"
+                    aria-label={copy.advanced}
+                    title={copy.advanced}
                     type="button"
                     onClick={() => handleOpenAdvancedChange(true)}
                     className="ml-auto flex items-center gap-2 text-sm bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-[#5146E5]/30 h-10 rounded-xl px-3 ring-1 ring-inset ring-slate-200 shadow-sm font-instrument_sans font-medium"
@@ -275,20 +282,20 @@ export function ConfigurationSelects({
             <Dialog open={openAdvanced} onOpenChange={handleOpenAdvancedChange}>
                 <DialogContent className="max-w-2xl font-instrument_sans">
                     <DialogHeader>
-                        <DialogTitle>Advanced settings</DialogTitle>
+                        <DialogTitle>{copy.advanced}</DialogTitle>
                     </DialogHeader>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {/* Tone */}
                         <div className="w-full flex flex-col gap-2">
-                            <label className="text-sm font-semibold text-gray-700">Tone</label>
-                            <p className="text-xs text-gray-500">Controls the writing style (e.g., casual, professional, funny).</p>
+                            <label className="text-sm font-semibold text-gray-700">{copy.tone}</label>
+                            <p className="text-xs text-gray-500">{copy.toneDescription}</p>
                             <Select
                                 value={advancedDraft.tone}
                                 onValueChange={(value) => setAdvancedDraft((prev) => ({ ...prev, tone: value as ToneType }))}
                             >
                                 <SelectTrigger className="w-full font-instrument_sans capitalize font-medium bg-white border-slate-300 hover:bg-slate-50 focus-visible:ring-slate-300">
-                                    <SelectValue placeholder="Select tone" />
+                                    <SelectValue placeholder={copy.tonePlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent className="font-instrument_sans">
                                     {Object.values(ToneType).map((tone) => (
@@ -302,14 +309,14 @@ export function ConfigurationSelects({
 
                         {/* Verbosity */}
                         <div className="w-full flex flex-col gap-2">
-                            <label className="text-sm font-semibold text-gray-700">Verbosity</label>
-                            <p className="text-xs text-gray-500">Controls how detailed slide descriptions are: concise, standard, or text-heavy.</p>
+                            <label className="text-sm font-semibold text-gray-700">{copy.verbosity}</label>
+                            <p className="text-xs text-gray-500">{copy.verbosityDescription}</p>
                             <Select
                                 value={advancedDraft.verbosity}
                                 onValueChange={(value) => setAdvancedDraft((prev) => ({ ...prev, verbosity: value as VerbosityType }))}
                             >
                                 <SelectTrigger className="w-full font-instrument_sans capitalize font-medium bg-white border-slate-300 hover:bg-slate-50 focus-visible:ring-slate-300">
-                                    <SelectValue placeholder="Select verbosity" />
+                                    <SelectValue placeholder={copy.verbosityPlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent className="font-instrument_sans">
                                     {Object.values(VerbosityType).map((verbosity) => (
@@ -326,52 +333,52 @@ export function ConfigurationSelects({
                         {/* Toggles */}
                         <div className="w-full flex flex-col gap-2 p-3 rounded-md bg-slate-50 border-slate-200">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-semibold text-gray-700">Include table of contents</label>
+                                <label className="text-sm font-semibold text-gray-700">{copy.includeTableOfContents}</label>
                                 <Switch
                                     checked={advancedDraft.includeTableOfContents}
                                     onCheckedChange={(checked) => setAdvancedDraft((prev) => ({ ...prev, includeTableOfContents: checked }))}
                                 />
                             </div>
-                            <p className="text-xs text-gray-600">Add an index slide summarizing sections (requires 3+ slides).</p>
+                            <p className="text-xs text-gray-600">{copy.includeTableOfContentsDescription}</p>
                         </div>
                         <div className="w-full flex flex-col gap-2 p-3 rounded-md bg-slate-50 border-slate-200">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-semibold text-gray-700">Title slide</label>
+                                <label className="text-sm font-semibold text-gray-700">{copy.titleSlide}</label>
                                 <Switch
                                     checked={advancedDraft.includeTitleSlide}
                                     onCheckedChange={(checked) => setAdvancedDraft((prev) => ({ ...prev, includeTitleSlide: checked }))}
                                 />
                             </div>
-                            <p className="text-xs text-gray-600">Include a title slide as the first slide.</p>
+                            <p className="text-xs text-gray-600">{copy.titleSlideDescription}</p>
                         </div>
                         <div className="w-full flex flex-col gap-2 p-3 rounded-md bg-slate-50 border-slate-200">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-semibold text-gray-700">Web search</label>
+                                <label className="text-sm font-semibold text-gray-700">{copy.webSearch}</label>
                                 <Switch
                                     checked={advancedDraft.webSearch}
                                     onCheckedChange={(checked) => setAdvancedDraft((prev) => ({ ...prev, webSearch: checked }))}
                                 />
                             </div>
-                            <p className="text-xs text-gray-600">Allow the model to consult the web for fresher facts.</p>
+                            <p className="text-xs text-gray-600">{copy.webSearchDescription}</p>
                         </div>
 
                         {/* Instructions */}
                         <div className="w-full sm:col-span-2 flex flex-col gap-2">
-                            <label className="text-sm font-semibold text-gray-700">Instructions</label>
-                            <p className="text-xs text-gray-500">Optional guidance for the AI. These override defaults except format constraints.</p>
+                            <label className="text-sm font-semibold text-gray-700">{copy.instructions}</label>
+                            <p className="text-xs text-gray-500">{copy.instructionsDescription}</p>
                             <Textarea
                                 value={advancedDraft.instructions}
                                 rows={4}
                                 onChange={(e) => setAdvancedDraft((prev) => ({ ...prev, instructions: e.target.value }))}
-                                placeholder="Example: Focus on enterprise buyers, emphasize ROI and security compliance. Keep slides data-driven, avoid jargon, and include a short call-to-action on the final slide."
+                                placeholder={copy.instructionsPlaceholder}
                                 className="py-2 px-3 border-2 font-medium text-sm min-h-[100px] max-h-[200px] border-blue-200 focus-visible:ring-offset-0 focus-visible:ring-blue-300"
                             />
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => handleOpenAdvancedChange(false)}>Cancel</Button>
-                        <Button onClick={handleSaveAdvanced} className="bg-[#5141e5] text-white hover:bg-[#5141e5]/90">Save</Button>
+                        <Button variant="outline" onClick={() => handleOpenAdvancedChange(false)}>{copy.cancel}</Button>
+                        <Button onClick={handleSaveAdvanced} className="bg-[#5141e5] text-white hover:bg-[#5141e5]/90">{copy.save}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
