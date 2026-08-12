@@ -7,6 +7,7 @@ import {
   Undo2,
   RotateCcw,
   ArrowRightFromLine,
+  ArrowLeft,
 
   ArrowUpRight,
 
@@ -184,6 +185,19 @@ const PresentationHeader = ({
     trackEvent(MixpanelEvent.Header_ReGenerate_Button_Clicked, { pathname });
     router.push(`/presentation?id=${presentation_id}&stream=true`);
   };
+  // Sends the user back to whichever 3labs page they came from (set by
+  // ConfigurationInitializer.tsx from the /sso redirect's `return` param;
+  // falls back to the dashboard if absent — e.g. someone opened Presenton
+  // directly, not via the SSO handoff).
+  const handleBackToThreeLabs = () => {
+    const returnUrl =
+      typeof window !== "undefined"
+        ? localStorage.getItem("presenton_return_url")
+        : null;
+    trackEvent(MixpanelEvent.Navigation, { from: pathname, to: returnUrl || "3labs-dashboard" });
+    window.location.href = returnUrl || "https://app.3labs.ca/dashboard";
+  };
+
   const downloadLink = (path: string) => {
     // if we have popup access give direct download if not redirect to the path
     if (window.opener) {
@@ -240,7 +254,17 @@ const PresentationHeader = ({
   return (
     <>
       <div className="py-7 sticky top-0 bg-white z-50 mb-[17px]  font-sans flex justify-between items-center">
-        <h2 className="text-lg text-[#101323] font-sans "><MarkdownRenderer content={presentationData?.title || "Presentation"} className="mb-0  w-[600px] truncate text-sm text-[#101323] " /></h2>
+        <div className="flex items-center gap-3 min-w-0">
+          <ToolTip content="Back to 3Labs">
+            <button
+              onClick={handleBackToThreeLabs}
+              className="flex items-center justify-center w-8 h-8 rounded-full border border-[#c8dfd1] text-[#101323] hover:bg-[#f0f7f3] hover:text-[#2d7a4f] transition-colors flex-shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          </ToolTip>
+          <h2 className="text-lg text-[#101323] font-sans "><MarkdownRenderer content={presentationData?.title || "Presentation"} className="mb-0  w-[600px] truncate text-sm text-[#101323] " /></h2>
+        </div>
         <div className="flex items-center gap-2.5">
 
           {isPresentationSaving && <div className="flex items-center gap-2">

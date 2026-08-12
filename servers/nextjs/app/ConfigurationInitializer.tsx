@@ -20,6 +20,15 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
     if (userId) {
       localStorage.setItem('presenton_user_id', userId);
     }
+    // Additive only — the iframe flow never sends `return`, so this is a
+    // no-op for that path. Lets PresentationHeader's "Back to 3Labs" button
+    // (added for the SSO entry point) know where to send the user, since
+    // /sso's redirect lands here (on `/`) before any client-side navigation
+    // to /presentation or /upload happens.
+    const returnUrl = params.get('return');
+    if (returnUrl) {
+      localStorage.setItem('presenton_return_url', returnUrl);
+    }
   }, []);
   const router = useRouter();
   const route = usePathname();
