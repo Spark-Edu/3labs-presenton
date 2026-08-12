@@ -6,8 +6,24 @@ import { verifySsoToken } from "@/app/lib/sso";
 // on this subdomain.
 const APP_LOGIN_URL = "https://app.3labs.ca/login";
 
+// `new URL(request.url).origin` reflects the Host header Next.js's own HTTP
+// server sees, which behind Railway's proxy is the container's internal
+// bind address (localhost:3000), not the public host — confirmed 2026-08-12,
+// this shipped a redirect straight to https://localhost:3000/. Railway (like
+// any standard reverse proxy) sets X-Forwarded-Host/-Proto correctly, so
+// prefer those when present.
+function getPublicOrigin(request: NextRequest): string {
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  return new URL(request.url).origin;
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = getPublicOrigin(request);
   const token = searchParams.get("token");
   const returnUrl = searchParams.get("return");
 
