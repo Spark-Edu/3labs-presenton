@@ -6,6 +6,7 @@ import { hasValidLLMConfig } from '@/utils/storeHelpers';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { checkIfSelectedOllamaModelIsPulled } from '@/utils/providerUtils';
+import { captureSsoParams } from '@/utils/ssoParams';
 import { LLMConfig } from '@/types/llm_config';
 
 export function ConfigurationInitializer({ children }: { children: React.ReactNode }) {
@@ -13,22 +14,14 @@ export function ConfigurationInitializer({ children }: { children: React.ReactNo
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // Capture userId from URL param and persist for API calls
+  // Capture userId/return from URL params and persist for API calls.
+  //
+  // Also run from the root layout (see app/SsoParamCapture.tsx) because the SSO
+  // handoff lands on "/", which this layout does not cover. Kept here as well so
+  // the iframe flow — which lands directly on /upload — does not depend on that
+  // root mount; the helper is idempotent, so running twice writes the same value.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const userId = params.get('userId');
-    if (userId) {
-      localStorage.setItem('presenton_user_id', userId);
-    }
-    // Additive only — the iframe flow never sends `return`, so this is a
-    // no-op for that path. Lets PresentationHeader's "Back to 3Labs" button
-    // (added for the SSO entry point) know where to send the user, since
-    // /sso's redirect lands here (on `/`) before any client-side navigation
-    // to /presentation or /upload happens.
-    const returnUrl = params.get('return');
-    if (returnUrl) {
-      localStorage.setItem('presenton_return_url', returnUrl);
-    }
+    captureSsoParams();
   }, []);
   const router = useRouter();
   const route = usePathname();

@@ -253,8 +253,14 @@ const PresentationHeader = ({
 
   return (
     <>
-      <div className="py-7 sticky top-0 bg-white z-50 mb-[17px]  font-sans flex justify-between items-center">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* flex-wrap rather than a plain justify-between row: this header sits in
+          the editor column, which is a `w-full` flex sibling of SidePanel's
+          fixed w-[200px], so at a 375px viewport it is only ~126px wide. Without
+          wrapping, the row overflows and the two groups paint over each other
+          (the back button landed on top of the toolbar pill) while Export was
+          pushed off-screen with no horizontal scroll to reach it. */}
+      <div className="py-7 sticky top-0 bg-white z-50 mb-[17px]  font-sans flex flex-wrap justify-between items-center gap-x-3 gap-y-2">
+        <div className="flex items-center gap-3 min-w-0 flex-1 basis-[200px]">
           <ToolTip content="Back to 3Labs">
             <button
               onClick={handleBackToThreeLabs}
@@ -263,16 +269,20 @@ const PresentationHeader = ({
               <ArrowLeft className="w-4 h-4" />
             </button>
           </ToolTip>
-          <h2 className="text-lg text-[#101323] font-sans "><MarkdownRenderer content={presentationData?.title || "Presentation"} className="mb-0  w-[600px] truncate text-sm text-[#101323] " /></h2>
+          {/* max-w rather than a fixed w-[600px]: the fixed width forced the row
+              far past narrow viewports and defeated `truncate`. */}
+          <h2 className="text-lg text-[#101323] font-sans min-w-0 flex-1"><MarkdownRenderer content={presentationData?.title || "Presentation"} className="mb-0  w-full max-w-[600px] truncate text-sm text-[#101323] " /></h2>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap justify-end">
 
           {isPresentationSaving && <div className="flex items-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           </div>}
           {/* Theme button hidden for demo — ThemeSelector not yet functional */}
 
-          <div className="flex items-center gap-2 bg-[#f0f7f3] px-3.5 h-[38px] border border-[#c8dfd1] rounded-[80px]">
+          {/* Tighter gap/padding below sm so the whole pill fits the narrow
+              editor column instead of clipping; unchanged from sm up. */}
+          <div className="flex items-center gap-1 sm:gap-2 bg-[#f0f7f3] px-2 sm:px-3.5 h-[38px] border border-[#c8dfd1] rounded-[80px] flex-shrink-0">
 
             <ToolTip content="Regenerate Presentation">
               <button onClick={handleReGenerate} className="group">
@@ -316,7 +326,7 @@ const PresentationHeader = ({
 
           <Popover open={open} onOpenChange={setOpen} >
             <PopoverTrigger asChild>
-              <button className="flex items-center gap-[7px] px-[18px] py-[11px] rounded-[53px] text-sm font-semibold bg-[#2665F9] text-white transition-colors hover:bg-[#1f55d8] disabled:opacity-60"
+              <button className="flex items-center gap-[7px] px-3 sm:px-[18px] py-[11px] rounded-[53px] text-sm font-semibold bg-[#2665F9] text-white transition-colors hover:bg-[#1f55d8] disabled:opacity-60 flex-shrink-0"
                 style={{
                   color: "#ffffff",
                 }}

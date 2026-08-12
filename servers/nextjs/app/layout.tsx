@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import MixpanelInitializer from "./MixpanelInitializer";
+import { SsoParamCapture } from "./SsoParamCapture";
 import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({
   subsets: ["latin"],
@@ -28,6 +29,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
+        {/* First child of <body> on purpose: sibling effects run in render
+            order, so the capture lands before any page-level redirect effect
+            (e.g. Home's router.push("/upload")) can navigate the params away. */}
+        <SsoParamCapture />
         <Providers>
           <MixpanelInitializer>
 

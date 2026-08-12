@@ -43,9 +43,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(APP_LOGIN_URL);
   }
 
-  // Hand off into the existing ConfigurationInitializer.tsx `?userId=` capture
-  // (the same mechanism the lesson-creation iframe flow already relies on) —
-  // deliberately not introducing a parallel session/cookie mechanism here.
+  // Hand off into the `?userId=` capture in utils/ssoParams.ts, run from the
+  // root layout via app/SsoParamCapture.tsx (the same mechanism the
+  // lesson-creation iframe flow already relies on, which additionally runs it
+  // from ConfigurationInitializer.tsx) — deliberately not introducing a
+  // parallel session/cookie mechanism here. Note the capture must be reachable
+  // from the ROOT layout: this redirect targets "/", which the
+  // (presentation-generator) group's layout does not cover.
   // The difference from the iframe flow's URL param is that this value has
   // just passed signature + expiry verification, not that the destination
   // page treats it any differently once it arrives.
