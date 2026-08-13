@@ -67,8 +67,20 @@ export const PresentationCard = ({
 
         <img src="/card_bg.svg" alt="" className="absolute top-0 left-0 w-full h-full object-cover" />
         <div className="scale-[0.75] mt-4  border border-gray-300 rounded-lg overflow-hidden">
-
-          <SlideScale slide={firstSlide} />
+          {firstSlide ? (
+            <SlideScale slide={firstSlide} />
+          ) : (
+            // Presentations with zero slides (still generating, or an
+            // abandoned draft) have `presentation.slides` as an empty array,
+            // so firstSlide is undefined here. SlideScale renders unconditionally
+            // and V1ContentRender immediately reads slide.layout_group with no
+            // guard, so passing it undefined crashed the whole dashboard grid
+            // (TypeError: Cannot read properties of undefined (reading
+            // 'layout_group')) — not just this one card.
+            <div className="aspect-video w-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs font-sans">
+              No slides yet
+            </div>
+          )}
         </div>
 
         <div className="w-full py-3 px-5 mt-auto z-40 relative bg-white  border-t border-[#EDEEEF]">
