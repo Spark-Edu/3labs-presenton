@@ -20,6 +20,15 @@ export interface PresentationResponse {
 
   thumbnail: string;
   slides: any[];
+
+  // Set only by 3labs-api's save-to-library flow when this deck is linked to
+  // a 3Labs course lesson (see servers/fastapi/models/sql/presentation.py).
+  // Absent/null means "not known to be lesson-linked" — used to split the
+  // dashboard into Course/Lesson vs. Independent tabs.
+  lesson_id?: string | null;
+  course_id?: string | null;
+  lesson_title?: string | null;
+  course_title?: string | null;
 }
 
 export class DashboardApi {

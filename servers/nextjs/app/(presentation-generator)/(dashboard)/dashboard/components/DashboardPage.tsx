@@ -7,12 +7,16 @@ import { PresentationGrid } from "@/app/(presentation-generator)/(dashboard)/das
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-
+type DashboardTab = "course" | "independent";
 
 const DashboardPage: React.FC = () => {
   const [presentations, setPresentations] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // "Course/Lesson" groups decks 3labs-api has linked to a lesson
+  // (lesson_id set); "Independent" is everything else, including every deck
+  // that predates this field — see dashboard.ts's PresentationResponse.
+  const [tab, setTab] = useState<DashboardTab>("independent");
 
   useEffect(() => {
     const loadData = async () => {
@@ -44,6 +48,16 @@ const DashboardPage: React.FC = () => {
       prev ? prev.filter((p: any) => p.id !== presentationId) : []
     );
   };
+
+  const courseCount = presentations
+    ? presentations.filter((p: any) => !!p.lesson_id).length
+    : 0;
+  const independentCount = presentations
+    ? presentations.filter((p: any) => !p.lesson_id).length
+    : 0;
+  const visiblePresentations = presentations
+    ? presentations.filter((p: any) => (tab === "course" ? !!p.lesson_id : !p.lesson_id))
+    : presentations;
 
   return (
     <div className="min-h-screen  w-full px-6 pb-10 relative">
@@ -89,8 +103,33 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {!isLoading && !error && (
+        <div className="mb-6 p-1 rounded-[40px] bg-[#F7F6F9] w-fit border border-[#F4F4F4] flex items-center justify-center">
+          <button
+            className="px-5 py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]"
+            onClick={() => setTab("independent")}
+            style={{
+              background: tab === "independent" ? "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)" : "transparent",
+            }}
+          >
+            Independent ({independentCount})
+          </button>
+          <svg xmlns="http://www.w3.org/2000/svg" className="mx-1" width="2" height="17" viewBox="0 0 2 17" fill="none">
+            <path d="M1 0V16.5" stroke="#EDECEC" strokeWidth="2" />
+          </svg>
+          <button
+            className="px-5 py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]"
+            onClick={() => setTab("course")}
+            style={{
+              background: tab === "course" ? "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)" : "transparent",
+            }}
+          >
+            Course/Lesson ({courseCount})
+          </button>
+        </div>
+      )}
       <PresentationGrid
-        presentations={presentations}
+        presentations={visiblePresentations}
         type="slide"
         isLoading={isLoading}
         error={error}

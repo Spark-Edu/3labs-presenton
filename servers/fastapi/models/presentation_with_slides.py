@@ -18,4 +18,10 @@ class PresentationWithSlides(BaseModel):
     tone: Optional[str] = None
     verbosity: Optional[str] = None
     theme: Optional[dict] = None
+    # See models/sql/presentation.py — set only by 3labs-api at save time for
+    # lesson-linked decks. Dashboard tabs key off lesson_id being non-null.
+    lesson_id: Optional[str] = None
+    course_id: Optional[str] = None
+    lesson_title: Optional[str] = None
+    course_title: Optional[str] = None
     slides: List[SlideModel]

@@ -43,6 +43,15 @@ class PresentationModel(SQLModel, table=True):
     include_title_slide: bool = Field(sa_column=Column(Boolean), default=True)
     web_search: bool = Field(sa_column=Column(Boolean), default=False)
     user_id: Optional[str] = Field(sa_column=Column(String), default=None)
+    # Set only by 3labs-api's PresentonService.saveToLibrary, via
+    # PATCH /api/v1/ppt/presentation/update, when this deck is linked to a
+    # 3Labs course lesson. NULL/absent means "not known to be lesson-linked" —
+    # decks created directly on this app's own /upload flow never get these
+    # set. Used by the dashboard to split "Course/Lesson" vs "Independent".
+    lesson_id: Optional[str] = Field(sa_column=Column(String, index=True), default=None)
+    course_id: Optional[str] = Field(sa_column=Column(String), default=None)
+    lesson_title: Optional[str] = Field(sa_column=Column(String), default=None)
+    course_title: Optional[str] = Field(sa_column=Column(String), default=None)
 
     def get_new_presentation(self):
         return PresentationModel(

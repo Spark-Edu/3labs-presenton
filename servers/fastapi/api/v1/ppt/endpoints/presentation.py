@@ -377,6 +377,10 @@ async def update_presentation(
     n_slides: Annotated[Optional[int], Body()] = None,
     title: Annotated[Optional[str], Body()] = None,
     theme: Annotated[Optional[dict], Body()] = None,
+    lesson_id: Annotated[Optional[str], Body()] = None,
+    course_id: Annotated[Optional[str], Body()] = None,
+    lesson_title: Annotated[Optional[str], Body()] = None,
+    course_title: Annotated[Optional[str], Body()] = None,
     slides: Annotated[Optional[List[SlideModel]], Body()] = None,
     sql_session: AsyncSession = Depends(get_async_session),
 ):
@@ -387,14 +391,31 @@ async def update_presentation(
     presentation_update_dict = {}
     request_body = await request.json()
     theme_provided = "theme" in request_body
+    # Same "was the key present at all" pattern as theme_provided above —
+    # lets a caller explicitly clear a field by sending it as null, distinct
+    # from just not mentioning it.
+    lesson_fields_provided = {
+        "lesson_id": "lesson_id" in request_body,
+        "course_id": "course_id" in request_body,
+        "lesson_title": "lesson_title" in request_body,
+        "course_title": "course_title" in request_body,
+    }
     if n_slides:
         presentation_update_dict["n_slides"] = n_slides
     if title:
         presentation_update_dict["title"] = title
     if theme_provided:
         presentation_update_dict["theme"] = theme
+    if lesson_fields_provided["lesson_id"]:
+        presentation_update_dict["lesson_id"] = lesson_id
+    if lesson_fields_provided["course_id"]:
+        presentation_update_dict["course_id"] = course_id
+    if lesson_fields_provided["lesson_title"]:
+        presentation_update_dict["lesson_title"] = lesson_title
+    if lesson_fields_provided["course_title"]:
+        presentation_update_dict["course_title"] = course_title
 
-    if n_slides or title or theme_provided:
+    if n_slides or title or theme_provided or any(lesson_fields_provided.values()):
         presentation.sqlmodel_update(presentation_update_dict)
 
     if slides:
