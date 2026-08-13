@@ -8,15 +8,22 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 type DashboardTab = "course" | "independent";
+type CourseOption = { id: string; title: string };
+
+// Decks with lesson_id but no course_id (a lesson not attached to a course)
+// are bucketed under this synthetic id for the filter dropdown, instead of
+// silently disappearing from every specific-course filter.
+const UNCATEGORIZED_COURSE_ID = "__uncategorized__";
 
 const DashboardPage: React.FC = () => {
   const [presentations, setPresentations] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // "Course/Lesson" groups decks 3labs-api has linked to a lesson
-  // (lesson_id set); "Independent" is everything else, including every deck
-  // that predates this field — see dashboard.ts's PresentationResponse.
+  // "Courses" groups decks 3labs-api has linked to a lesson (lesson_id set);
+  // "Independent" is everything else, including every deck that predates
+  // this field — see dashboard.ts's PresentationResponse.
   const [tab, setTab] = useState<DashboardTab>("independent");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
 
   useEffect(() => {
     const loadData = async () => {
@@ -55,8 +62,34 @@ const DashboardPage: React.FC = () => {
   const independentCount = presentations
     ? presentations.filter((p: any) => !p.lesson_id).length
     : 0;
+
+  // Distinct courses among course-linked decks, for the filter dropdown.
+  // Built with an explicit Map<string, string> (rather than chaining off the
+  // `any`-typed presentations array) so TS can actually infer the element
+  // type instead of collapsing the chain to unknown[].
+  const courseIdToTitle = new Map<string, string>();
+  if (presentations) {
+    for (const p of presentations as any[]) {
+      if (!p.lesson_id) continue;
+      const id: string = p.course_id || UNCATEGORIZED_COURSE_ID;
+      const title: string = p.course_id
+        ? p.course_title || "Untitled course"
+        : "Uncategorized";
+      if (!courseIdToTitle.has(id)) courseIdToTitle.set(id, title);
+    }
+  }
+  const courseOptions: CourseOption[] = Array.from(
+    courseIdToTitle,
+    ([id, title]) => ({ id, title })
+  ).sort((a, b) => a.title.localeCompare(b.title));
+
   const visiblePresentations = presentations
-    ? presentations.filter((p: any) => (tab === "course" ? !!p.lesson_id : !p.lesson_id))
+    ? presentations.filter((p: any) => {
+        if (tab === "independent") return !p.lesson_id;
+        if (!p.lesson_id) return false;
+        if (selectedCourseId === "all") return true;
+        return (p.course_id || UNCATEGORIZED_COURSE_ID) === selectedCourseId;
+      })
     : presentations;
 
   return (
@@ -104,28 +137,45 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
       {!isLoading && !error && (
-        <div className="mb-6 p-1 rounded-[40px] bg-[#F7F6F9] w-fit border border-[#F4F4F4] flex items-center justify-center">
-          <button
-            className="px-5 py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]"
-            onClick={() => setTab("independent")}
-            style={{
-              background: tab === "independent" ? "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)" : "transparent",
-            }}
-          >
-            Independent ({independentCount})
-          </button>
-          <svg xmlns="http://www.w3.org/2000/svg" className="mx-1" width="2" height="17" viewBox="0 0 2 17" fill="none">
-            <path d="M1 0V16.5" stroke="#EDECEC" strokeWidth="2" />
-          </svg>
-          <button
-            className="px-5 py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]"
-            onClick={() => setTab("course")}
-            style={{
-              background: tab === "course" ? "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)" : "transparent",
-            }}
-          >
-            Course/Lesson ({courseCount})
-          </button>
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <div className="p-1 rounded-[40px] bg-[#F7F6F9] w-fit border border-[#F4F4F4] flex items-center justify-center">
+            <button
+              className="px-5 py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]"
+              onClick={() => setTab("independent")}
+              style={{
+                background: tab === "independent" ? "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)" : "transparent",
+              }}
+            >
+              Independent ({independentCount})
+            </button>
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-1" width="2" height="17" viewBox="0 0 2 17" fill="none">
+              <path d="M1 0V16.5" stroke="#EDECEC" strokeWidth="2" />
+            </svg>
+            <button
+              className="px-5 py-2 text-xs font-medium text-[#3A3A3A] rounded-[70px]"
+              onClick={() => setTab("course")}
+              style={{
+                background: tab === "course" ? "linear-gradient(270deg, #D5CAFC 2.4%, #E3D2EB 27.88%, #F4DCD3 69.23%, #FDE4C2 100%)" : "transparent",
+              }}
+            >
+              Courses ({courseCount})
+            </button>
+          </div>
+          {tab === "course" && courseOptions.length > 0 && (
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="text-xs font-medium text-[#3A3A3A] rounded-[70px] border border-[#F4F4F4] bg-[#F7F6F9] px-4 py-2.5 outline-none cursor-pointer"
+              aria-label="Filter by course"
+            >
+              <option value="all">All courses</option>
+              {courseOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
       <PresentationGrid
