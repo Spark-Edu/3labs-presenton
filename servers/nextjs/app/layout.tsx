@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import MixpanelInitializer from "./MixpanelInitializer";
 import { SsoParamCapture } from "./SsoParamCapture";
+import { AuthGuard } from "./AuthGuard";
 import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({
   subsets: ["latin"],
@@ -29,18 +30,24 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased`}
       >
-        {/* First child of <body> on purpose: sibling effects run in render
-            order, so the capture lands before any page-level redirect effect
-            (e.g. Home's router.push("/upload")) can navigate the params away. */}
-        <SsoParamCapture />
-        <Providers>
-          <MixpanelInitializer>
+        {/* AuthGuard wraps everything below: it renders nothing until it has
+            confirmed identity (query param or localStorage), so an
+            unauthenticated visitor never sees the app — not even a flash of
+            it — before being bounced to app.3labs.ca. See app/AuthGuard.tsx. */}
+        <AuthGuard>
+          {/* First child on purpose: sibling effects run in render order, so
+              the capture lands before any page-level redirect effect
+              (e.g. Home's router.push("/upload")) can navigate the params away. */}
+          <SsoParamCapture />
+          <Providers>
+            <MixpanelInitializer>
 
-            {children}
+              {children}
 
-          </MixpanelInitializer>
-        </Providers>
-        <Toaster position="top-center" />
+            </MixpanelInitializer>
+          </Providers>
+          <Toaster position="top-center" />
+        </AuthGuard>
       </body>
     </html>
   );
