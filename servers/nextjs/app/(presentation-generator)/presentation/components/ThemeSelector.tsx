@@ -6,9 +6,10 @@ import { Palette } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateTheme } from '@/store/slices/presentationGeneration';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useFontLoader } from '../../hooks/useFontLoad';
 import { RootState } from '@/store/store';
-import ThemeApi from '../../services/api/theme';
+import { PresentationGenerationApi } from '../../services/api/presentation-generation';
 import { applyThemeFontStyles, getThemeFontConfig } from '../../utils/themeFonts';
 
 const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { presentation_id: string, current_theme: any, themes: any[] }) => {
@@ -20,7 +21,21 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
         const element = document.getElementById('presentation-slides-wrapper')
         if (!element) return;
         if (allThemes.length === 0) return;
-        await ThemeApi.applyThemeToPresentation(presentation_id, theme.id)
+        try {
+            // Persist via the same PATCH /api/v1/ppt/presentation/update route
+            // 3labs-api's presenton.service.ts already uses for this exact
+            // purpose (applyThemeToPresentation) — the endpoint this used to
+            // call, POST /themes/apply/{themeId}/presentation/{id}, does not
+            // exist on the FastAPI backend (only /default, /all, /create,
+            // /update/{id}, /delete/{id} are registered under THEMES_ROUTER),
+            // so every click here 404'd, threw inside this async function
+            // with nothing to catch it, and silently applied nothing.
+            await PresentationGenerationApi.updatePresentationContent({ id: presentation_id, theme })
+        } catch (error: any) {
+            console.error('Error applying theme:', error)
+            toast.error(error?.message || 'Failed to apply theme')
+            return
+        }
         setCurrentTheme(theme)
         clearTheme()
         if (!theme.data.colors['graph_0']) { return; }
@@ -44,12 +59,14 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
         }
         Object.entries(cssVariables).forEach(([key, value]) => {
             element.style.setProperty(key, value)
+            document.documentElement.style.setProperty(key, value)
         })
         const { fontsToLoad } = getThemeFontConfig(theme)
         useFontLoader(fontsToLoad)
         applyThemeFontStyles(element, theme)
 
         dispatch(updateTheme(theme))
+        toast.success(`Applied "${theme.name}" theme`)
     }
     const clearTheme = () => {
         const element = document.getElementById('presentation-slides-wrapper')
@@ -80,9 +97,21 @@ const ThemeSelector = ({ presentation_id, current_theme, themes: allThemes }: { 
         document.documentElement.style.removeProperty('font-family');
     }
     const resetTheme = async () => {
+        try {
+            // Persist the clear too — previously this only touched local CSS
+            // vars/Redux state, so a page reload silently brought the old
+            // theme straight back (fetchUserSlides in usePresentationData.ts
+            // reapplies whatever `theme` is stored on the presentation).
+            await PresentationGenerationApi.updatePresentationContent({ id: presentation_id, theme: null })
+        } catch (error: any) {
+            console.error('Error resetting theme:', error)
+            toast.error(error?.message || 'Failed to reset theme')
+            return
+        }
         clearTheme();
-
+        setCurrentTheme(null)
         dispatch(updateTheme(null))
+        toast.success('Theme reset')
     }
 
 
