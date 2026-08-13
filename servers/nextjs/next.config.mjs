@@ -11,7 +11,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://app.3labs.ca https://learn.3labs.ca http://localhost:5173 http://localhost:3000",
+            value: "frame-ancestors 'self' https://app.3labs.ca https://learn.3labs.ca https://main.3labs-web.pages.dev http://localhost:5173 http://localhost:3000",
           },
           {
             key: 'X-Frame-Options',
