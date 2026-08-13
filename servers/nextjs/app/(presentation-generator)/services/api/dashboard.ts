@@ -26,10 +26,17 @@ export class DashboardApi {
 
   static async getPresentations(): Promise<PresentationResponse[]> {
     try {
+      // Was sending no headers at all, so the backend's `X-User-Id` header
+      // defaulted to "local" (see presentation.py's get_all_presentations,
+      // which filters `WHERE user_id == x_user_id`) instead of the real
+      // signed-in identity every other call here sends via getHeader() —
+      // meaning presentations created under the real user_id never matched
+      // this listing query and never showed up on the dashboard.
       const response = await fetch(
         `/api/v1/ppt/presentation/all`,
         {
           method: "GET",
+          headers: getHeader(),
         }
       );
 
@@ -52,6 +59,7 @@ export class DashboardApi {
         `/api/v1/ppt/presentation/${id}`,
         {
           method: "GET",
+          headers: getHeader(),
         }
       );
 
