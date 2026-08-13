@@ -125,8 +125,23 @@ const SidePanel = ({
   return (
     <div className="bg-white pt-8 px-4 w-[200px] border-r border-gray-100">
 
-      <div className="flex items-center gap-2 px-1">
-        <span className="text-lg font-semibold tracking-tight" style={{ color: '#1a5c3a', fontFamily: 'inherit' }}>
+      {/* Mirrors 3labs-web-new's src/components/common/BrandLogo.tsx — same bolt
+          path and same colors (#2665F9 primary blue, #0F1117 neutral-900) — so
+          the editor's mark matches the one on the landing page and app.3labs.ca,
+          instead of the plain green wordmark this used to be. */}
+      <div className="flex items-center gap-2.5 px-1">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: '#2665F9' }}
+        >
+          <svg width={18} height={18} viewBox="0 0 500 500" fill="none">
+            <path
+              d="M 395 41 L 138 41 L 37 176 L 46 191 L 175 191 L 184 197 L 183 206 L 116 302 L 113 315 L 126 326 L 233 326 L 240 332 L 231 456 L 238 471 L 254 466 L 456 209 L 454 195 L 444 188 L 323 185 L 323 177 L 402 63 L 404 51 Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+        <span className="text-base font-bold tracking-tight" style={{ color: '#0F1117' }}>
           3Labs
         </span>
       </div>
