@@ -185,17 +185,13 @@ const PresentationHeader = ({
     trackEvent(MixpanelEvent.Header_ReGenerate_Button_Clicked, { pathname });
     router.push(`/presentation?id=${presentation_id}&stream=true`);
   };
-  // Sends the user back to whichever 3labs page they came from (set by
-  // ConfigurationInitializer.tsx from the /sso redirect's `return` param;
-  // falls back to the dashboard if absent — e.g. someone opened Presenton
-  // directly, not via the SSO handoff).
-  const handleBackToThreeLabs = () => {
-    const returnUrl =
-      typeof window !== "undefined"
-        ? localStorage.getItem("presenton_return_url")
-        : null;
-    trackEvent(MixpanelEvent.Navigation, { from: pathname, to: returnUrl || "3labs-dashboard" });
-    window.location.href = returnUrl || "https://app.3labs.ca/dashboard";
+  // Back button now returns to Presenton's own standalone dashboard, not
+  // straight out to 3Labs — the dedicated "return to 3Labs" action lives on
+  // the dashboard sidebar instead (see DashboardSidebar.tsx). This replaces
+  // the earlier return-URL-based redirect used before the dashboard existed.
+  const handleBackToDashboard = () => {
+    trackEvent(MixpanelEvent.Navigation, { from: pathname, to: "/dashboard" });
+    router.push("/dashboard");
   };
 
   const downloadLink = (path: string) => {
@@ -261,9 +257,9 @@ const PresentationHeader = ({
           pushed off-screen with no horizontal scroll to reach it. */}
       <div className="py-7 sticky top-0 bg-white z-50 mb-[17px]  font-sans flex flex-wrap justify-between items-center gap-x-3 gap-y-2">
         <div className="flex items-center gap-3 min-w-0 flex-1 basis-[200px]">
-          <ToolTip content="Back to 3Labs">
+          <ToolTip content="Back to Dashboard">
             <button
-              onClick={handleBackToThreeLabs}
+              onClick={handleBackToDashboard}
               className="flex items-center justify-center w-8 h-8 rounded-full border border-[#c8dfd1] text-[#101323] hover:bg-[#f0f7f3] hover:text-[#2d7a4f] transition-colors flex-shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -278,7 +274,13 @@ const PresentationHeader = ({
           {isPresentationSaving && <div className="flex items-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           </div>}
-          {/* Theme button hidden for demo — ThemeSelector not yet functional */}
+          {/* Re-enabled for the standalone SSO page — was commented out while
+              Presenton was only ever shown inside the iframe. */}
+          <ThemeSelector
+            presentation_id={presentation_id}
+            current_theme={presentationData?.theme}
+            themes={themes}
+          />
 
           {/* Tighter gap/padding below sm so the whole pill fits the narrow
               editor column instead of clipping; unchanged from sm up. */}

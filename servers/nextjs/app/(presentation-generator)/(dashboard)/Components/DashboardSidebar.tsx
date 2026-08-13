@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LayoutDashboard, Star, Brain, Settings, Palette } from "lucide-react";
+import { LayoutDashboard, Star, Brain, Settings, Palette, ArrowLeft } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,8 +27,17 @@ const DashboardSidebar = () => {
     const activeTab = pathname.split("?")[0].split("/").pop();
     const router = useRouter();
 
-
-
+    // Returns to whichever 3Labs page the user came from (set by
+    // ConfigurationInitializer.tsx / SsoParamCapture.tsx from the /sso
+    // redirect's `return` param); falls back to the app dashboard if absent
+    // — e.g. someone opened the Presenton dashboard directly, not via SSO.
+    const handleBackToThreeLabs = () => {
+        const returnUrl =
+            typeof window !== "undefined"
+                ? localStorage.getItem("presenton_return_url")
+                : null;
+        window.location.href = returnUrl || "https://app.3labs.ca/dashboard";
+    };
 
     return (
         <aside
@@ -37,8 +46,16 @@ const DashboardSidebar = () => {
         >
             <div>
 
-                <div onClick={() => router.push("/dashboard")} className="flex items-center  pb-6 border-b border-slate-200/60   gap-2    ">
-                </div>
+                <button
+                    type="button"
+                    onClick={handleBackToThreeLabs}
+                    className="flex flex-col items-center gap-2 w-full pb-6 border-b border-slate-200/60 text-slate-600 hover:text-[#2d7a4f] transition-colors"
+                    aria-label="Back to 3Labs"
+                    title="Back to 3Labs"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-[11px]">3Labs</span>
+                </button>
                 <nav className="pt-6 font-sans" aria-label="Dashboard sections">
                     <div className="  space-y-6">
 
@@ -90,31 +107,9 @@ const DashboardSidebar = () => {
                 </nav>
             </div>
 
-            <div className=" pt-5 border-t border-slate-200/60  font-sans "
-            >
-                {BelongingNavItems.map(({ key, label: itemLabel, icon: Icon }) => {
-                    const isActive = activeTab === key;
-                    return (
-                        <Link
-                            prefetch={false}
-                            key={key}
-                            href={`/${key}`}
-                            className={[
-                                "flex flex-col tex-center items-center gap-2  transition-colors ",
-                                isActive ? "" : "ring-transparent",
-                            ].join(" ")}
-                            aria-label={itemLabel}
-                            title={itemLabel}
-                        >
-                            <Icon className={["h-4 w-4", isActive ? "text-slate-800" : "text-slate-600"].join(" ")} />
-                            <span className="text-[11px] text-slate-800">{itemLabel}</span>
-                        </Link>
-                    );
-                })}
-
-
-
-            </div>
+            {/* Settings hidden for the trainer-facing standalone dashboard —
+                BelongingNavItems/"settings" route is kept below (unused) in
+                case Settings needs to come back for an internal/admin view. */}
 
         </aside>
     );
