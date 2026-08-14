@@ -12,7 +12,7 @@ import {
   ArrowUpRight,
 
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Popover,
@@ -34,10 +34,14 @@ import ToolTip from "@/components/ToolTip";
 import { clearPresentationData } from "@/store/slices/presentationGeneration";
 import { clearHistory } from "@/store/slices/undoRedoSlice";
 import { Separator } from "@/components/ui/separator";
-import ThemeSelector from "./ThemeSelector";
-import { DEFAULT_THEMES } from "../../(dashboard)/theme/components/ThemePanel/constants";
-import ThemeApi from "../../services/api/theme";
-import { Theme } from "../../services/api/types";
+// Theme feature retired 2026-08-14 (see DashboardSidebar.tsx for the
+// matching nav-entry removal and rationale) — ThemeSelector, its theme-list
+// fetch below, and these imports (ThemeSelector, DEFAULT_THEMES, ThemeApi,
+// Theme) are all dead now that nothing renders the selector.
+// import ThemeSelector from "./ThemeSelector";
+// import { DEFAULT_THEMES } from "../../(dashboard)/theme/components/ThemePanel/constants";
+// import ThemeApi from "../../services/api/theme";
+// import { Theme } from "../../services/api/types";
 import MarkdownRenderer from "@/components/MarkDownRender";
 
 const PresentationHeader = ({
@@ -52,7 +56,8 @@ const PresentationHeader = ({
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [isExporting, setIsExporting] = useState(false);
-  const [themes, setThemes] = useState<Theme[]>([]);
+  // Theme feature retired 2026-08-14 — see import comment above.
+  // const [themes, setThemes] = useState<Theme[]>([]);
 
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -62,17 +67,18 @@ const PresentationHeader = ({
     (state: RootState) => state.presentationGeneration
   );
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const customThemes = await ThemeApi.getThemes();
-        setThemes([...customThemes, ...DEFAULT_THEMES]);
-      } catch (e: any) {
-        toast.error(e?.message || "Failed to load themes");
-      }
-    };
-    load();
-  }, []);
+  // Theme feature retired 2026-08-14 — see import comment above.
+  // useEffect(() => {
+  //   const load = async () => {
+  //     try {
+  //       const customThemes = await ThemeApi.getThemes();
+  //       setThemes([...customThemes, ...DEFAULT_THEMES]);
+  //     } catch (e: any) {
+  //       toast.error(e?.message || "Failed to load themes");
+  //     }
+  //   };
+  //   load();
+  // }, []);
 
   const { onUndo, onRedo, canUndo, canRedo } = usePresentationUndoRedo();
 
@@ -274,13 +280,15 @@ const PresentationHeader = ({
           {isPresentationSaving && <div className="flex items-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           </div>}
-          {/* Re-enabled for the standalone SSO page — was commented out while
-              Presenton was only ever shown inside the iframe. */}
-          <ThemeSelector
+          {/* Theme feature retired 2026-08-14 — was re-enabled for the standalone
+              SSO page (see prior comment history), now commented out for good
+              along with its imports/state/fetch above. See DashboardSidebar.tsx
+              for the matching nav-entry removal and rationale. */}
+          {/* <ThemeSelector
             presentation_id={presentation_id}
             current_theme={presentationData?.theme}
             themes={themes}
-          />
+          /> */}
 
           {/* Tighter gap/padding below sm so the whole pill fits the narrow
               editor column instead of clipping; unchanged from sm up. */}

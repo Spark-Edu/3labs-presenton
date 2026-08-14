@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LayoutDashboard, Star, Brain, Settings, Palette, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Star, Brain, Settings, ArrowLeft } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -88,21 +88,14 @@ const DashboardSidebar = () => {
                                 <span className="text-[11px] text-slate-800">Templates</span>
                             </div>
                         </Link>
-                        <Link
-                            prefetch={false}
-                            href={`/theme`}
-                            className={[
-                                "flex flex-col tex-center items-center gap-2  transition-colors",
-                                pathname === "/theme" ? "" : "ring-transparent",
-                            ].join(" ")}
-                            aria-label="Theme"
-                            title="Theme"
-                        >
-                            <div className="flex flex-col cursor-pointer tex-center items-center gap-2  transition-colors">
-                                <Palette className={`h-4 w-4 ${pathname === "/theme" ? "text-slate-800" : "text-slate-600"}`} />
-                                <span className="text-[11px] text-slate-800">Themes</span>
-                            </div>
-                        </Link>
+                        {/* Theme nav entry removed 2026-08-14 — the theme feature (custom
+                            theme creation/editing) is being retired across slides.3labs.ca.
+                            It sat on Presenton's open-source theme storage/identity model,
+                            which repeatedly broke (org/user key mismatches, tab-state bugs,
+                            an unresolved localStorage identity issue on refresh) and was
+                            judged not worth continuing to patch rather than rebuild. See
+                            /theme route and ThemeSelector in PresentationHeader.tsx (also
+                            commented out) for the rest of this feature's surface area. */}
                     </div>
                 </nav>
             </div>
