@@ -414,6 +414,7 @@ const ThemePanel: React.FC = () => {
       }
       const created = await ThemeApi.createTheme(params)
       setCustomThemes([...customThemes, created])
+      setTab('custom')
       setSelectedTheme(created)
       setIsSheetOpen(false)
 
