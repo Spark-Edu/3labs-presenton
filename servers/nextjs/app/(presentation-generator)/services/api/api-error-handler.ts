@@ -1,8 +1,50 @@
 // API Error Response Interface
+// `detail`/`message`/`error` are typed `unknown`, not `string`, on purpose:
+// FastAPI's own automatic validation-error responses (422) always send
+// `detail` as an ARRAY of {loc, msg, type} objects, never a string. Typing
+// these as `string` here hid that mismatch from the compiler while the code
+// below passed the array straight into `new Error(...)`, which JS
+// stringifies as the literal text "[object Object]" (or
+// "[object Object],[object Object]" for more than one) — see
+// stringifyErrorDetail below for the fix.
 interface ApiErrorResponse {
-  detail?: string;
-  message?: string;
-  error?: string;
+  detail?: unknown;
+  message?: unknown;
+  error?: unknown;
+}
+
+// Formats whichever shape `detail`/`message`/`error` actually arrives in
+// into a human-readable string, instead of relying on JS's implicit
+// `String(value)` coercion — which turns a plain object, or an array of
+// objects (FastAPI's validation-error shape), into "[object Object]" with
+// no indication of what actually failed.
+function stringifyErrorDetail(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    // FastAPI/Pydantic validation error shape: [{ loc: [...], msg, type }, ...]
+    return detail
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const { loc, msg } = item as { loc?: unknown[]; msg?: unknown };
+          const location = Array.isArray(loc) ? loc.join(".") : undefined;
+          if (location && typeof msg === "string") return `${location}: ${msg}`;
+          if (typeof msg === "string") return msg;
+        }
+        return typeof item === "string" ? item : JSON.stringify(item);
+      })
+      .join("; ");
+  }
+
+  if (detail && typeof detail === "object") {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return String(detail);
+    }
+  }
+
+  return String(detail);
 }
 
 // API Response Handler Utility
@@ -32,12 +74,12 @@ export class ApiResponseHandler {
       const errorData: ApiErrorResponse = await response.json();
       
       // Extract error message in order of preference
-      if (errorData.detail) {
-        errorMessage = errorData.detail;
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
-      } else if (errorData.error) {
-        errorMessage = errorData.error;
+      if (errorData.detail !== undefined && errorData.detail !== null) {
+        errorMessage = stringifyErrorDetail(errorData.detail);
+      } else if (errorData.message !== undefined && errorData.message !== null) {
+        errorMessage = stringifyErrorDetail(errorData.message);
+      } else if (errorData.error !== undefined && errorData.error !== null) {
+        errorMessage = stringifyErrorDetail(errorData.error);
       }
     } catch (parseError) {
       // If JSON parsing fails, use status-based messages
@@ -63,12 +105,12 @@ export class ApiResponseHandler {
         const errorData: ApiErrorResponse = await response.json();
         
         // Extract error message in order of preference
-        if (errorData.detail) {
-          errorMessage = errorData.detail;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
+        if (errorData.detail !== undefined && errorData.detail !== null) {
+          errorMessage = stringifyErrorDetail(errorData.detail);
+        } else if (errorData.message !== undefined && errorData.message !== null) {
+          errorMessage = stringifyErrorDetail(errorData.message);
+        } else if (errorData.error !== undefined && errorData.error !== null) {
+          errorMessage = stringifyErrorDetail(errorData.error);
         }
       } catch (parseError) {
         // If JSON parsing fails, use status-based messages
