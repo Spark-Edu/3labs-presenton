@@ -77,6 +77,16 @@ export async function GET(request: NextRequest) {
   // that param attached authorizes immediately, same as landing on "/".
   const destination = new URL(dest, origin);
   destination.searchParams.set("userId", claims.sub);
+  // Forwarded alongside userId so slides.3labs.ca's own requests can send
+  // X-Org-Id, matching what 3labs-api's PresentonService already sends when
+  // the same account acts through app.3labs.ca. Without this, a theme/font
+  // created via one entry point lands under a different owner key than the
+  // other reads from (theme.py: owner_id = x_org_id or x_user_id) and never
+  // shows up on the other side. claims.orgId comes from the same signed
+  // token as claims.sub, so no additional trust boundary is crossed here.
+  if (claims.orgId) {
+    destination.searchParams.set("orgId", claims.orgId);
+  }
   if (returnUrl) {
     destination.searchParams.set("return", returnUrl);
   }

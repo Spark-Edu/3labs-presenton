@@ -25,6 +25,16 @@ export function captureSsoParams(): void {
     localStorage.setItem('presenton_user_id', userId);
   }
 
+  // Only the SSO entry point sends `orgId` (app/sso/route.ts, forwarding the
+  // signed token's claims.orgId) — the older iframe flow never captures one,
+  // same as `return` below. Read back by header.ts's getOrgId() to send
+  // X-Org-Id on every API call, mirroring 3labs-api's
+  // PresentonService.presentonHeaders() for the same account.
+  const orgId = params.get('orgId');
+  if (orgId) {
+    localStorage.setItem('presenton_org_id', orgId);
+  }
+
   // Only the SSO entry point sends `return`; the iframe flow never does, so this
   // stays a no-op for that path. Read back by PresentationHeader's
   // "Back to 3Labs" button.
