@@ -34,6 +34,19 @@ export async function POST(req: NextRequest) {
   page.setDefaultNavigationTimeout(300000);
   page.setDefaultTimeout(300000);
 
+  // This Puppeteer page is an internal, server-side render used only to
+  // produce the export file — never shown to a real visitor. It opens a
+  // fresh browser context with no localStorage/cookies, which AuthGuard
+  // (app/AuthGuard.tsx) treats as an unauthenticated visitor and bounces to
+  // app.3labs.ca before any slide content renders, so the PDF ends up
+  // capturing the login page instead of the presentation. Seed the same
+  // identity marker AuthGuard checks for, before navigation, so only this
+  // internal render is exempted — AuthGuard's behavior for real visitors on
+  // every other route is unchanged.
+  await page.evaluateOnNewDocument(() => {
+    localStorage.setItem("presenton_user_id", "internal-export");
+  });
+
   await page.goto(`http://localhost/pdf-maker?id=${id}`, {
     waitUntil: "networkidle0",
     timeout: 300000,
