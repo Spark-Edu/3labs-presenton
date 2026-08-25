@@ -98,6 +98,16 @@ async function getBrowserAndPage(id: string): Promise<[Browser, Page]> {
   await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
   page.setDefaultNavigationTimeout(300000);
   page.setDefaultTimeout(300000);
+
+  // Same internal-render exemption as export-as-pdf/route.ts — see comment
+  // there. Without this, AuthGuard bounces this fresh, cookie-less Puppeteer
+  // context to app.3labs.ca before #presentation-slides-wrapper ever
+  // renders, and getSlidesWrapper() below throws "Presentation slides not
+  // found" (surfaces to the user as the PPTX export failing outright).
+  await page.evaluateOnNewDocument(() => {
+    localStorage.setItem("presenton_user_id", "internal-export");
+  });
+
   await page.goto(`http://localhost/pdf-maker?id=${id}`, {
     waitUntil: "networkidle0",
     timeout: 300000,
